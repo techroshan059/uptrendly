@@ -1,0 +1,44 @@
+<template>
+    <div class="login-one">
+        <div class="container">
+            <div class="row">
+                <div class="col-12">
+                    <div class="login-table reveal" data-sr-id="10" style=" visibility: visible;  -webkit-transform: translateY(0) scale(1); opacity: 1;transform: translateY(0) scale(1); opacity: 1;-webkit-transition: -webkit-transform 1s ease-in-out 0s, opacity 1s ease-in-out 0s; transition: transform 1s ease-in-out 0s, opacity 1s ease-in-out 0s; ">
+                        <div class="login-header">
+                            <a href="#">
+                                <img style="width:140px" v-bind:src="'images/logo.png'" alt="uptrendly-logo">
+                            </a>
+                        </div>
+    
+                        <form>
+                            <input type="text" name="email" placeholder="Email" class="form-control" aria-invalid="true" style="">
+    
+                            <input type="password" name="password" placeholder="Password" class="form-control" aria-invalid="true" style="margin-top: 20px;">
+                            <div class="text-left"><label class="nice-form" style="margin-top: 20px">
+                                    <input type="checkbox"
+                                           class="ng-pristine ng-untouched ng-valid ng-empty" aria-invalid="false">
+                                    <span class="fake-input"></span>
+                                    <span
+                                            class="fake-label">Remember me</span></label></div>
+    
+                            <input type="submit" class="db-btn db-btn__blue db-btn__type-md" style="width: 100%; margin-bottom:20px" value="Sign in">
+                        </form>
+                        <div style="text-align: center;">
+                            <ul>
+                                <li><a href="">Forgot Password</a></li>
+                                <li style="margin-top: 12px">No account yet?</li>
+                                <li style="margin-top: 12px"><a href="" class="db-btn db-btn__white db-btn__type-md" style="width: 100%">Sign Up As a Brand</a></li>
+                                <li style="margin-top: 10px"><a href="" class="db-btn db-btn__white db-btn__type-md" style="width: 100%">Sign Up As a Influencer</a></li>
+    
+                                <li style="margin-top: 12px">2018, Uptrendly, LLC.</li>
+    
+                            </ul>
+    
+                        </div>
+                    </div>
+                </div>
+    
+            </div>
+        </div>
+    </div>
+</template>

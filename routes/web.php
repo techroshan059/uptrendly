@@ -11,14 +11,16 @@
 |
 */
 
+
 Route::get('/', function () {
-    return view('welcome');
-})->where(['any' => '.*']);
+    return view('frontend.home');
+});
 
-
-
+Route::get('{any}', function () {
+    return view('frontend.home');
+});
 
 
 Auth::routes();
 
-Route::get('/dashboard', 'Backend\HomeController@index')->name('admin.dashboard');
+Route::get('admin/dashboard', 'Backend\HomeController@index')->name('admin.dashboard');
