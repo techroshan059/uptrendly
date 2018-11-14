@@ -11,15 +11,18 @@
 |
 */
 
+
 Route::get('/', function () {
-    return view('welcome');
-})->where(['any' => '.*']);
+    return view('frontend.home');
+});
 
-
-
+Route::get('{any}', function () {
+    return view('frontend.home');
+});
 
 
 Auth::routes();
+
 
 Route::get('/dashboard', 'Backend\HomeController@index')->name('admin.dashboard');
 
@@ -48,3 +51,6 @@ Route::post('admin/testimonials/addnew','Backend\CmsManagement\TestimonialsContr
 Route::get('admin/testimonials/edit','Backend\CmsManagement\TestimonialsController@edit');
 Route::post('admin/testimonials','Backend\CmsManagement\TestimonialsController@update');
 Route::delete('admin/testimonials/delete/{id}','Backend\CmsManagement\TestimonialsController@destroy');
+
+Route::get('admin/dashboard', 'Backend\HomeController@index')->name('admin.dashboard');
+

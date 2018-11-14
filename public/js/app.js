@@ -67,6 +67,115 @@
 /* 0 */
 /***/ (function(module, exports) {
 
+/* globals __VUE_SSR_CONTEXT__ */
+
+// IMPORTANT: Do NOT use ES2015 features in this file.
+// This module is a runtime utility for cleaner component module output and will
+// be included in the final webpack user bundle.
+
+module.exports = function normalizeComponent (
+  rawScriptExports,
+  compiledTemplate,
+  functionalTemplate,
+  injectStyles,
+  scopeId,
+  moduleIdentifier /* server only */
+) {
+  var esModule
+  var scriptExports = rawScriptExports = rawScriptExports || {}
+
+  // ES6 modules interop
+  var type = typeof rawScriptExports.default
+  if (type === 'object' || type === 'function') {
+    esModule = rawScriptExports
+    scriptExports = rawScriptExports.default
+  }
+
+  // Vue.extend constructor export interop
+  var options = typeof scriptExports === 'function'
+    ? scriptExports.options
+    : scriptExports
+
+  // render functions
+  if (compiledTemplate) {
+    options.render = compiledTemplate.render
+    options.staticRenderFns = compiledTemplate.staticRenderFns
+    options._compiled = true
+  }
+
+  // functional template
+  if (functionalTemplate) {
+    options.functional = true
+  }
+
+  // scopedId
+  if (scopeId) {
+    options._scopeId = scopeId
+  }
+
+  var hook
+  if (moduleIdentifier) { // server build
+    hook = function (context) {
+      // 2.3 injection
+      context =
+        context || // cached call
+        (this.$vnode && this.$vnode.ssrContext) || // stateful
+        (this.parent && this.parent.$vnode && this.parent.$vnode.ssrContext) // functional
+      // 2.2 with runInNewContext: true
+      if (!context && typeof __VUE_SSR_CONTEXT__ !== 'undefined') {
+        context = __VUE_SSR_CONTEXT__
+      }
+      // inject component styles
+      if (injectStyles) {
+        injectStyles.call(this, context)
+      }
+      // register component module identifier for async chunk inferrence
+      if (context && context._registeredComponents) {
+        context._registeredComponents.add(moduleIdentifier)
+      }
+    }
+    // used by ssr in case component is cached and beforeCreate
+    // never gets called
+    options._ssrRegister = hook
+  } else if (injectStyles) {
+    hook = injectStyles
+  }
+
+  if (hook) {
+    var functional = options.functional
+    var existing = functional
+      ? options.render
+      : options.beforeCreate
+
+    if (!functional) {
+      // inject component registration as beforeCreate hook
+      options.beforeCreate = existing
+        ? [].concat(existing, hook)
+        : [hook]
+    } else {
+      // for template-only hot-reload because in that case the render fn doesn't
+      // go through the normalizer
+      options._injectStyles = hook
+      // register for functioal component in vue file
+      options.render = function renderWithStyleInjection (h, context) {
+        hook.call(context)
+        return existing(h, context)
+      }
+    }
+  }
+
+  return {
+    esModule: esModule,
+    exports: scriptExports,
+    options: options
+  }
+}
+
+
+/***/ }),
+/* 1 */
+/***/ (function(module, exports) {
+
 var g;
 
 // This works in non-strict mode
@@ -91,7 +200,7 @@ module.exports = g;
 
 
 /***/ }),
-/* 1 */
+/* 2 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -11054,123 +11163,14 @@ Vue.compile = compileToFunctions;
 
 module.exports = Vue;
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0), __webpack_require__(5).setImmediate))
-
-/***/ }),
-/* 2 */
-/***/ (function(module, exports) {
-
-/* globals __VUE_SSR_CONTEXT__ */
-
-// IMPORTANT: Do NOT use ES2015 features in this file.
-// This module is a runtime utility for cleaner component module output and will
-// be included in the final webpack user bundle.
-
-module.exports = function normalizeComponent (
-  rawScriptExports,
-  compiledTemplate,
-  functionalTemplate,
-  injectStyles,
-  scopeId,
-  moduleIdentifier /* server only */
-) {
-  var esModule
-  var scriptExports = rawScriptExports = rawScriptExports || {}
-
-  // ES6 modules interop
-  var type = typeof rawScriptExports.default
-  if (type === 'object' || type === 'function') {
-    esModule = rawScriptExports
-    scriptExports = rawScriptExports.default
-  }
-
-  // Vue.extend constructor export interop
-  var options = typeof scriptExports === 'function'
-    ? scriptExports.options
-    : scriptExports
-
-  // render functions
-  if (compiledTemplate) {
-    options.render = compiledTemplate.render
-    options.staticRenderFns = compiledTemplate.staticRenderFns
-    options._compiled = true
-  }
-
-  // functional template
-  if (functionalTemplate) {
-    options.functional = true
-  }
-
-  // scopedId
-  if (scopeId) {
-    options._scopeId = scopeId
-  }
-
-  var hook
-  if (moduleIdentifier) { // server build
-    hook = function (context) {
-      // 2.3 injection
-      context =
-        context || // cached call
-        (this.$vnode && this.$vnode.ssrContext) || // stateful
-        (this.parent && this.parent.$vnode && this.parent.$vnode.ssrContext) // functional
-      // 2.2 with runInNewContext: true
-      if (!context && typeof __VUE_SSR_CONTEXT__ !== 'undefined') {
-        context = __VUE_SSR_CONTEXT__
-      }
-      // inject component styles
-      if (injectStyles) {
-        injectStyles.call(this, context)
-      }
-      // register component module identifier for async chunk inferrence
-      if (context && context._registeredComponents) {
-        context._registeredComponents.add(moduleIdentifier)
-      }
-    }
-    // used by ssr in case component is cached and beforeCreate
-    // never gets called
-    options._ssrRegister = hook
-  } else if (injectStyles) {
-    hook = injectStyles
-  }
-
-  if (hook) {
-    var functional = options.functional
-    var existing = functional
-      ? options.render
-      : options.beforeCreate
-
-    if (!functional) {
-      // inject component registration as beforeCreate hook
-      options.beforeCreate = existing
-        ? [].concat(existing, hook)
-        : [hook]
-    } else {
-      // for template-only hot-reload because in that case the render fn doesn't
-      // go through the normalizer
-      options._injectStyles = hook
-      // register for functioal component in vue file
-      options.render = function renderWithStyleInjection (h, context) {
-        hook.call(context)
-        return existing(h, context)
-      }
-    }
-  }
-
-  return {
-    esModule: esModule,
-    exports: scriptExports,
-    options: options
-  }
-}
-
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1), __webpack_require__(5).setImmediate))
 
 /***/ }),
 /* 3 */
 /***/ (function(module, exports, __webpack_require__) {
 
 __webpack_require__(4);
-module.exports = __webpack_require__(14);
+module.exports = __webpack_require__(25);
 
 
 /***/ }),
@@ -11179,11 +11179,11 @@ module.exports = __webpack_require__(14);
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_vue__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_vue__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_vue__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__App_vue__ = __webpack_require__(8);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__App_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__App_vue__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__routes__ = __webpack_require__(10);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__routes__ = __webpack_require__(11);
 
 
 
@@ -11264,7 +11264,7 @@ exports.clearImmediate = (typeof self !== "undefined" && self.clearImmediate) ||
                          (typeof global !== "undefined" && global.clearImmediate) ||
                          (this && this.clearImmediate);
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1)))
 
 /***/ }),
 /* 6 */
@@ -11457,7 +11457,7 @@ exports.clearImmediate = (typeof self !== "undefined" && self.clearImmediate) ||
     attachTo.clearImmediate = clearImmediate;
 }(typeof self === "undefined" ? typeof global === "undefined" ? this : global : self));
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0), __webpack_require__(7)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1), __webpack_require__(7)))
 
 /***/ }),
 /* 7 */
@@ -11654,11 +11654,11 @@ process.umask = function() { return 0; };
 /***/ (function(module, exports, __webpack_require__) {
 
 var disposed = false
-var normalizeComponent = __webpack_require__(2)
+var normalizeComponent = __webpack_require__(0)
 /* script */
-var __vue_script__ = null
+var __vue_script__ = __webpack_require__(9)
 /* template */
-var __vue_template__ = __webpack_require__(9)
+var __vue_template__ = __webpack_require__(10)
 /* template functional */
 var __vue_template_functional__ = false
 /* styles */
@@ -11698,62 +11698,272 @@ module.exports = Component.exports
 
 /***/ }),
 /* 9 */
+/***/ (function(module, exports) {
+
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+
+/***/ }),
+/* 10 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var render = function() {
   var _vm = this
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
-  return _c("div", { staticClass: "header clearfix" }, [
-    _c("nav", [
+  return _c(
+    "div",
+    { staticClass: "main-wrapper" },
+    [
       _c(
-        "ul",
-        { staticClass: "nav nav-pills pull-right" },
+        "header",
+        {
+          staticClass:
+            "navigation navigation__transparent navigation__left navigation-text__dark navigation__btn-fill navigation__landscape",
+          staticStyle: { "margin-top": "10px" }
+        },
         [
-          _c("router-link", { attrs: { to: "/brandsignup" } }, [
-            _vm._v("\n                Brand\n            ")
-          ]),
-          _vm._v(" "),
-          _vm._m(0),
-          _vm._v(" "),
-          _vm._m(1),
-          _vm._v(" "),
-          _vm._m(2)
-        ],
-        1
-      )
-    ]),
-    _vm._v(" "),
-    _c("h3", { staticClass: "text-muted" }, [_vm._v("Home Page")]),
-    _vm._v(" "),
-    _c("div", { staticClass: "panel-body" }, [_c("router-view")], 1)
-  ])
+          _c("div", { staticClass: "container" }, [
+            _c("div", { staticClass: "row" }, [
+              _c("div", { staticClass: "col-12" }, [
+                _c(
+                  "div",
+                  { staticClass: "navigation-content" },
+                  [
+                    _c(
+                      "router-link",
+                      { staticClass: "navigation__brand", attrs: { to: "/" } },
+                      [
+                        _c("img", {
+                          staticClass: "navigation-main__logo",
+                          staticStyle: { width: "120px" },
+                          attrs: {
+                            src: "images/logo.png",
+                            alt: "uptrendlyLogo"
+                          }
+                        })
+                      ]
+                    ),
+                    _vm._v(" "),
+                    _c("button", { staticClass: "navigation__toggler" }),
+                    _vm._v(" "),
+                    _c("nav", { staticClass: "navigation-wrapper" }, [
+                      _c("button", { staticClass: "offcanvas__close" }, [
+                        _vm._v("✕")
+                      ]),
+                      _vm._v(" "),
+                      _c(
+                        "ul",
+                        {
+                          staticClass: "navigation-menu right-nav",
+                          attrs: { id: "nav" }
+                        },
+                        [
+                          _c(
+                            "li",
+                            { staticClass: "navigation-menu__item" },
+                            [
+                              _c(
+                                "router-link",
+                                {
+                                  staticClass: "navigation-menu__link active",
+                                  staticStyle: { "font-size": "14px" },
+                                  attrs: { to: "/influencer" }
+                                },
+                                [_vm._v("Influencer")]
+                              )
+                            ],
+                            1
+                          ),
+                          _vm._v(" "),
+                          _c(
+                            "li",
+                            { staticClass: "navigation-menu__item" },
+                            [
+                              _c(
+                                "router-link",
+                                {
+                                  staticClass: "navigation-menu__link active",
+                                  staticStyle: { "font-size": "14px" },
+                                  attrs: { to: "/brand" }
+                                },
+                                [_vm._v("Brand")]
+                              )
+                            ],
+                            1
+                          ),
+                          _vm._v(" "),
+                          _c(
+                            "li",
+                            { staticClass: "navigation-menu__item" },
+                            [
+                              _c(
+                                "router-link",
+                                {
+                                  staticClass: "navigation-menu__link active",
+                                  staticStyle: { "font-size": "14px" },
+                                  attrs: { to: "/pricing" }
+                                },
+                                [_vm._v("Pricing")]
+                              )
+                            ],
+                            1
+                          )
+                        ]
+                      ),
+                      _vm._v(" "),
+                      _c("ul", { staticClass: "navigation-menu right-nav" }, [
+                        _c(
+                          "li",
+                          { staticClass: "navigation-menu__item" },
+                          [
+                            _c(
+                              "router-link",
+                              {
+                                staticClass: "navigation-menu__link",
+                                staticStyle: { "font-size": "14px" },
+                                attrs: { to: "/login" }
+                              },
+                              [_vm._v("Login")]
+                            )
+                          ],
+                          1
+                        ),
+                        _vm._v(" "),
+                        _vm._m(0)
+                      ])
+                    ])
+                  ],
+                  1
+                )
+              ])
+            ])
+          ])
+        ]
+      ),
+      _vm._v(" "),
+      _c("router-view")
+    ],
+    1
+  )
 }
 var staticRenderFns = [
   function() {
     var _vm = this
     var _h = _vm.$createElement
     var _c = _vm._self._c || _h
-    return _c(
-      "li",
-      { staticClass: "active", attrs: { role: "presentation" } },
-      [_c("a", { attrs: { href: "#" } }, [_vm._v("Home")])]
-    )
-  },
-  function() {
-    var _vm = this
-    var _h = _vm.$createElement
-    var _c = _vm._self._c || _h
-    return _c("li", { attrs: { role: "presentation" } }, [
-      _c("a", { attrs: { href: "#" } }, [_vm._v("About")])
-    ])
-  },
-  function() {
-    var _vm = this
-    var _h = _vm.$createElement
-    var _c = _vm._self._c || _h
-    return _c("li", { attrs: { role: "presentation" } }, [
-      _c("a", { attrs: { href: "#" } }, [_vm._v("Contact")])
+    return _c("li", { staticClass: "navigation-menu__item" }, [
+      _c(
+        "a",
+        {
+          staticClass: "navigation-menu__link",
+          staticStyle: {
+            border: "none",
+            "background-color": "#65cadb",
+            "font-size": "14px",
+            "border-radius": "30px",
+            "letter-spacing": "1px",
+            padding: "16px 55px",
+            color: "white",
+            "min-width": "130px"
+          },
+          attrs: { href: "#" }
+        },
+        [_vm._v("Join Now")]
+      ),
+      _vm._v(" "),
+      _c(
+        "ul",
+        {
+          staticClass: "navigation-dropdown right-nav",
+          staticStyle: { "margin-top": "10px" }
+        },
+        [
+          _c("li", { staticClass: "navigation-menu__item" }, [
+            _c(
+              "a",
+              {
+                staticClass: "navigation-menu__link",
+                staticStyle: { "font-size": "14px" },
+                attrs: { href: "#" }
+              },
+              [_vm._v("Influencers")]
+            )
+          ]),
+          _vm._v(" "),
+          _c("li", { staticClass: "navigation-menu__item" }, [
+            _c(
+              "a",
+              {
+                staticClass: "navigation-menu__link",
+                staticStyle: { "font-size": "14px" },
+                attrs: { href: "#" }
+              },
+              [_vm._v("Brands")]
+            )
+          ])
+        ]
+      )
     ])
   }
 ]
@@ -11767,28 +11977,49 @@ if (false) {
 }
 
 /***/ }),
-/* 10 */
+/* 11 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_vue__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_vue__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_vue__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_vue_router__ = __webpack_require__(11);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__views_auth_brandregister_vue__ = __webpack_require__(12);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_vue_router__ = __webpack_require__(12);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__views_auth_brandregister_vue__ = __webpack_require__(13);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__views_auth_brandregister_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2__views_auth_brandregister_vue__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__views_auth_login_vue__ = __webpack_require__(15);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__views_auth_login_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3__views_auth_login_vue__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__views_home_vue__ = __webpack_require__(17);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__views_home_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_4__views_home_vue__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__views_landingInfluencer_vue__ = __webpack_require__(19);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__views_landingInfluencer_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_5__views_landingInfluencer_vue__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__views_landingbrand_vue__ = __webpack_require__(21);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__views_landingbrand_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_6__views_landingbrand_vue__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__views_landingpricing_vue__ = __webpack_require__(23);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__views_landingpricing_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_7__views_landingpricing_vue__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__views_landingfaqs_vue__ = __webpack_require__(30);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__views_landingfaqs_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_8__views_landingfaqs_vue__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__views_landingaboutus_vue__ = __webpack_require__(32);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__views_landingaboutus_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_9__views_landingaboutus_vue__);
+
+
+
+
+
+
 
 
 
 
 __WEBPACK_IMPORTED_MODULE_0_vue___default.a.use(__WEBPACK_IMPORTED_MODULE_1_vue_router__["a" /* default */]);
 var routes = new __WEBPACK_IMPORTED_MODULE_1_vue_router__["a" /* default */]({
-    routes: [{ path: '/brandsignup', component: __WEBPACK_IMPORTED_MODULE_2__views_auth_brandregister_vue___default.a }]
+    mode: 'history',
+    routes: [{ path: '/', component: __WEBPACK_IMPORTED_MODULE_4__views_home_vue___default.a }, { path: '/login', component: __WEBPACK_IMPORTED_MODULE_3__views_auth_login_vue___default.a }, { path: '/brandsignup', component: __WEBPACK_IMPORTED_MODULE_2__views_auth_brandregister_vue___default.a }, { path: '/brand', component: __WEBPACK_IMPORTED_MODULE_6__views_landingbrand_vue___default.a }, { path: '/influencer', component: __WEBPACK_IMPORTED_MODULE_5__views_landingInfluencer_vue___default.a }, { path: '/pricing', component: __WEBPACK_IMPORTED_MODULE_7__views_landingpricing_vue___default.a }, { path: '/faqs', component: __WEBPACK_IMPORTED_MODULE_8__views_landingfaqs_vue___default.a }, { path: '/about-us', component: __WEBPACK_IMPORTED_MODULE_9__views_landingaboutus_vue___default.a }]
 });
 
 /* harmony default export */ __webpack_exports__["a"] = (routes);
 
 /***/ }),
-/* 11 */
+/* 12 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -14418,15 +14649,15 @@ if (inBrowser && window.Vue) {
 
 
 /***/ }),
-/* 12 */
+/* 13 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var disposed = false
-var normalizeComponent = __webpack_require__(2)
+var normalizeComponent = __webpack_require__(0)
 /* script */
 var __vue_script__ = null
 /* template */
-var __vue_template__ = __webpack_require__(13)
+var __vue_template__ = __webpack_require__(14)
 /* template functional */
 var __vue_template_functional__ = false
 /* styles */
@@ -14465,7 +14696,7 @@ module.exports = Component.exports
 
 
 /***/ }),
-/* 13 */
+/* 14 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var render = function() {
@@ -14485,10 +14716,3143 @@ if (false) {
 }
 
 /***/ }),
-/* 14 */
+/* 15 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var disposed = false
+var normalizeComponent = __webpack_require__(0)
+/* script */
+var __vue_script__ = null
+/* template */
+var __vue_template__ = __webpack_require__(16)
+/* template functional */
+var __vue_template_functional__ = false
+/* styles */
+var __vue_styles__ = null
+/* scopeId */
+var __vue_scopeId__ = null
+/* moduleIdentifier (server only) */
+var __vue_module_identifier__ = null
+var Component = normalizeComponent(
+  __vue_script__,
+  __vue_template__,
+  __vue_template_functional__,
+  __vue_styles__,
+  __vue_scopeId__,
+  __vue_module_identifier__
+)
+Component.options.__file = "resources/js/views/auth/login.vue"
+
+/* hot reload */
+if (false) {(function () {
+  var hotAPI = require("vue-hot-reload-api")
+  hotAPI.install(require("vue"), false)
+  if (!hotAPI.compatible) return
+  module.hot.accept()
+  if (!module.hot.data) {
+    hotAPI.createRecord("data-v-6517b581", Component.options)
+  } else {
+    hotAPI.reload("data-v-6517b581", Component.options)
+  }
+  module.hot.dispose(function (data) {
+    disposed = true
+  })
+})()}
+
+module.exports = Component.exports
+
+
+/***/ }),
+/* 16 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var render = function() {
+  var _vm = this
+  var _h = _vm.$createElement
+  var _c = _vm._self._c || _h
+  return _c("div", { staticClass: "login-one" }, [
+    _c("div", { staticClass: "container" }, [
+      _c("div", { staticClass: "row" }, [
+        _c("div", { staticClass: "col-12" }, [
+          _c(
+            "div",
+            {
+              staticClass: "login-table reveal",
+              staticStyle: {
+                visibility: "visible",
+                "-webkit-transform": "translateY(0) scale(1)",
+                opacity: "1",
+                transform: "translateY(0) scale(1)",
+                "-webkit-transition":
+                  "-webkit-transform 1s ease-in-out 0s, opacity 1s ease-in-out 0s",
+                transition:
+                  "transform 1s ease-in-out 0s, opacity 1s ease-in-out 0s"
+              },
+              attrs: { "data-sr-id": "10" }
+            },
+            [
+              _c("div", { staticClass: "login-header" }, [
+                _c("a", { attrs: { href: "#" } }, [
+                  _c("img", {
+                    staticStyle: { width: "140px" },
+                    attrs: { src: "images/logo.png", alt: "uptrendly-logo" }
+                  })
+                ])
+              ]),
+              _vm._v(" "),
+              _vm._m(0),
+              _vm._v(" "),
+              _vm._m(1)
+            ]
+          )
+        ])
+      ])
+    ])
+  ])
+}
+var staticRenderFns = [
+  function() {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("form", [
+      _c("input", {
+        staticClass: "form-control",
+        attrs: {
+          type: "text",
+          name: "email",
+          placeholder: "Email",
+          "aria-invalid": "true"
+        }
+      }),
+      _vm._v(" "),
+      _c("input", {
+        staticClass: "form-control",
+        staticStyle: { "margin-top": "20px" },
+        attrs: {
+          type: "password",
+          name: "password",
+          placeholder: "Password",
+          "aria-invalid": "true"
+        }
+      }),
+      _vm._v(" "),
+      _c("div", { staticClass: "text-left" }, [
+        _c(
+          "label",
+          { staticClass: "nice-form", staticStyle: { "margin-top": "20px" } },
+          [
+            _c("input", {
+              staticClass: "ng-pristine ng-untouched ng-valid ng-empty",
+              attrs: { type: "checkbox", "aria-invalid": "false" }
+            }),
+            _vm._v(" "),
+            _c("span", { staticClass: "fake-input" }),
+            _vm._v(" "),
+            _c("span", { staticClass: "fake-label" }, [_vm._v("Remember me")])
+          ]
+        )
+      ]),
+      _vm._v(" "),
+      _c("input", {
+        staticClass: "db-btn db-btn__blue db-btn__type-md",
+        staticStyle: { width: "100%", "margin-bottom": "20px" },
+        attrs: { type: "submit", value: "Sign in" }
+      })
+    ])
+  },
+  function() {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("div", { staticStyle: { "text-align": "center" } }, [
+      _c("ul", [
+        _c("li", [
+          _c("a", { attrs: { href: "" } }, [_vm._v("Forgot Password")])
+        ]),
+        _vm._v(" "),
+        _c("li", { staticStyle: { "margin-top": "12px" } }, [
+          _vm._v("No account yet?")
+        ]),
+        _vm._v(" "),
+        _c("li", { staticStyle: { "margin-top": "12px" } }, [
+          _c(
+            "a",
+            {
+              staticClass: "db-btn db-btn__white db-btn__type-md",
+              staticStyle: { width: "100%" },
+              attrs: { href: "" }
+            },
+            [_vm._v("Sign Up As a Brand")]
+          )
+        ]),
+        _vm._v(" "),
+        _c("li", { staticStyle: { "margin-top": "10px" } }, [
+          _c(
+            "a",
+            {
+              staticClass: "db-btn db-btn__white db-btn__type-md",
+              staticStyle: { width: "100%" },
+              attrs: { href: "" }
+            },
+            [_vm._v("Sign Up As a Influencer")]
+          )
+        ]),
+        _vm._v(" "),
+        _c("li", { staticStyle: { "margin-top": "12px" } }, [
+          _vm._v("2018, Uptrendly, LLC.")
+        ])
+      ])
+    ])
+  }
+]
+render._withStripped = true
+module.exports = { render: render, staticRenderFns: staticRenderFns }
+if (false) {
+  module.hot.accept()
+  if (module.hot.data) {
+    require("vue-hot-reload-api")      .rerender("data-v-6517b581", module.exports)
+  }
+}
+
+/***/ }),
+/* 17 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var disposed = false
+var normalizeComponent = __webpack_require__(0)
+/* script */
+var __vue_script__ = null
+/* template */
+var __vue_template__ = __webpack_require__(18)
+/* template functional */
+var __vue_template_functional__ = false
+/* styles */
+var __vue_styles__ = null
+/* scopeId */
+var __vue_scopeId__ = null
+/* moduleIdentifier (server only) */
+var __vue_module_identifier__ = null
+var Component = normalizeComponent(
+  __vue_script__,
+  __vue_template__,
+  __vue_template_functional__,
+  __vue_styles__,
+  __vue_scopeId__,
+  __vue_module_identifier__
+)
+Component.options.__file = "resources/js/views/home.vue"
+
+/* hot reload */
+if (false) {(function () {
+  var hotAPI = require("vue-hot-reload-api")
+  hotAPI.install(require("vue"), false)
+  if (!hotAPI.compatible) return
+  module.hot.accept()
+  if (!module.hot.data) {
+    hotAPI.createRecord("data-v-6b822e44", Component.options)
+  } else {
+    hotAPI.reload("data-v-6b822e44", Component.options)
+  }
+  module.hot.dispose(function (data) {
+    disposed = true
+  })
+})()}
+
+module.exports = Component.exports
+
+
+/***/ }),
+/* 18 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var render = function() {
+  var _vm = this
+  var _h = _vm.$createElement
+  var _c = _vm._self._c || _h
+  return _c("div", [
+    _c("section", { staticClass: "hero-four hero-text-dark content-left " }, [
+      _c("div", { staticClass: "container" }, [
+        _c("div", { staticClass: "row" }, [
+          _c("div", { staticClass: "col-12" }, [
+            _c("div", { staticClass: "hero" }, [
+              _c("div", { staticClass: "hero-wrapper" }, [
+                _vm._m(0),
+                _vm._v(" "),
+                _c(
+                  "div",
+                  {
+                    staticClass: "hero-media reveal",
+                    staticStyle: {
+                      visibility: "visible",
+                      "-webkit-transform": "translateY(0) scale(1)",
+                      opacity: "1",
+                      transform: "translateY(0) scale(1)",
+                      "-webkit-transition":
+                        "-webkit-transform 1s ease-in-out 0s, opacity 1s ease-in-out 0s",
+                      transition:
+                        "transform 1s ease-in-out 0s, opacity 1s ease-in-out 0s"
+                    },
+                    attrs: { "data-sr-id": "1" }
+                  },
+                  [
+                    _c("picture", { staticClass: "hero-media__img" }, [
+                      _c("img", {
+                        staticStyle: { width: "750px" },
+                        attrs: {
+                          src: "frontend/img/influencers/i1.png",
+                          alt: "hero-media__img"
+                        }
+                      })
+                    ]),
+                    _vm._v(" "),
+                    _c("span", { staticClass: "hero__circle" })
+                  ]
+                )
+              ])
+            ])
+          ])
+        ])
+      ])
+    ]),
+    _vm._v(" "),
+    _vm._m(1),
+    _vm._v(" "),
+    _c(
+      "section",
+      { staticClass: "facts-one", staticStyle: { "margin-top": "40px" } },
+      [
+        _c("div", { staticClass: "container" }, [
+          _c("div", { staticClass: "row" }, [
+            _c("div", { staticClass: "col-lg-12 col-md-12" }, [
+              _c("div", { staticClass: "facts-wrapper" }, [
+                _c("img", {
+                  staticStyle: { width: "550px", transform: "rotate(-21deg)" },
+                  attrs: { src: "frontend/img/fact-1.1.png", alt: "facts-img" }
+                }),
+                _vm._v(" "),
+                _vm._m(2)
+              ])
+            ])
+          ])
+        ])
+      ]
+    ),
+    _vm._v(" "),
+    _vm._m(3),
+    _vm._v(" "),
+    _vm._m(4)
+  ])
+}
+var staticRenderFns = [
+  function() {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("div", { staticClass: "hero-content" }, [
+      _c(
+        "h1",
+        {
+          staticClass: "hero__title",
+          staticStyle: { "font-weight": "600", "font-size": "1.9em" }
+        },
+        [_vm._v("Nepal's only Influence marketing platform.")]
+      ),
+      _vm._v(" "),
+      _c("p", { staticClass: "hero__caption" }, [
+        _vm._v(
+          "\n                                    We advertise your products through Nepal's top social media influencers, who will build an image for your brand through engaging content directed to the exact target audience."
+        )
+      ]),
+      _vm._v(" "),
+      _c("div", { staticClass: "newsletter-optin" }, [
+        _c(
+          "a",
+          {
+            staticClass: "db-btn db-btn__blue db-btn__type-sm",
+            attrs: { href: "http://127.0.0.1:8000/choose-social-account" }
+          },
+          [_vm._v("I'm an Influencer")]
+        ),
+        _vm._v(" "),
+        _c(
+          "a",
+          {
+            staticClass: "db-btn db-btn__darkblue db-btn__type-sm",
+            attrs: { href: "http://127.0.0.1:8000/brand-signup" }
+          },
+          [_vm._v("I'm a Brand")]
+        )
+      ])
+    ])
+  },
+  function() {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("section", { staticClass: "features-one reveal" }, [
+      _c("div", { staticClass: "container" }, [
+        _c("div", { staticClass: "row" }, [
+          _c("div", { staticClass: "col-12 col-md-4" }, [
+            _c("div", { staticClass: "feature" }, [
+              _c("span", { staticClass: "feature__icon" }, [
+                _c("i", { staticClass: "nc-icon nc-layers-3" })
+              ]),
+              _vm._v(" "),
+              _c("h5", { staticClass: "feature__title" }, [
+                _vm._v("Determine Your Goals")
+              ]),
+              _vm._v(" "),
+              _c("p", { staticClass: "feature__description" }, [
+                _vm._v(
+                  "We understand that you've set clear goals for your brand. We have helped brands live their vision and make the most out of their goals. "
+                )
+              ])
+            ])
+          ]),
+          _vm._v(" "),
+          _c("div", { staticClass: "col-12 col-md-4" }, [
+            _c("div", { staticClass: "feature" }, [
+              _c("span", { staticClass: "feature__icon" }, [
+                _c("i", { staticClass: "nc-icon nc-watch-circle" })
+              ]),
+              _vm._v(" "),
+              _c("h5", { staticClass: "feature__title" }, [
+                _vm._v("Measure Outcomes of Campaign")
+              ]),
+              _vm._v(" "),
+              _c("p", { staticClass: "feature__description" }, [
+                _vm._v(
+                  "Focus on reach, engagements, impressions in order to get your product to your target audience. Measure your brand success through statistics. "
+                )
+              ])
+            ])
+          ]),
+          _vm._v(" "),
+          _c("div", { staticClass: "col-12 col-md-4" }, [
+            _c("div", { staticClass: "feature" }, [
+              _c("span", { staticClass: "feature__icon" }, [
+                _c("i", { staticClass: "nc-icon nc-chart-bar-33" })
+              ]),
+              _vm._v(" "),
+              _c("h5", { staticClass: "feature__title" }, [
+                _vm._v("Find A Credible Influencer")
+              ]),
+              _vm._v(" "),
+              _c("p", { staticClass: "feature__description" }, [
+                _vm._v(
+                  "We have got you covered to identify the perfect influencer for your brand.\n\n                        "
+                )
+              ])
+            ])
+          ])
+        ])
+      ])
+    ])
+  },
+  function() {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c(
+      "div",
+      {
+        staticClass: "fact reveal",
+        staticStyle: {
+          visibility: "visible",
+          "-webkit-transform": "translateY(0) scale(1)",
+          opacity: "1",
+          transform: "translateY(0) scale(1)",
+          "-webkit-transition":
+            "-webkit-transform 1s ease-in-out 0s, opacity 1s ease-in-out 0s",
+          transition: "transform 1s ease-in-out 0s, opacity 1s ease-in-out 0s"
+        },
+        attrs: { "data-sr-id": "3" }
+      },
+      [
+        _c("h2", { staticClass: "fact__title" }, [
+          _vm._v("Why are we the best fit for you? ")
+        ]),
+        _vm._v(" "),
+        _c("p", { staticClass: "fact__description" }, [
+          _vm._v(
+            "When your competitors are making the most out of influencer marketing, you certainly don't want to be left behind. Uptrendly has collaborated with top brands and influencers of Nepal in optimizing their marketing strategy and\n                                meeting their success stories.\n                            "
+          )
+        ]),
+        _vm._v(" "),
+        _c("ul", { staticClass: "fact-counter" }, [
+          _c("li", { staticClass: "fact-counter__list" }, [
+            _c(
+              "span",
+              {
+                staticClass: "fact-counter__list-value",
+                staticStyle: { "text-align": "center" }
+              },
+              [
+                _vm._v(
+                  "\n\n                                                                                                    2\n\n                                            "
+                )
+              ]
+            ),
+            _vm._v(" "),
+            _c("span", { staticClass: "fact-counter__list-title" }, [
+              _vm._v("Influencers")
+            ])
+          ]),
+          _vm._v(" "),
+          _c("li", { staticClass: "fact-counter__list" }, [
+            _c(
+              "span",
+              {
+                staticClass: "fact-counter__list-value",
+                staticStyle: { "text-align": "center" }
+              },
+              [
+                _vm._v(
+                  "\n                                                                                                      2\n                                                                                            "
+                )
+              ]
+            ),
+            _vm._v(" "),
+            _c("span", { staticClass: "fact-counter__list-title" }, [
+              _vm._v("Brands")
+            ])
+          ])
+        ])
+      ]
+    )
+  },
+  function() {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c(
+      "section",
+      { staticClass: "working-process", attrs: { id: "services" } },
+      [
+        _c("div", { staticClass: "container" }, [
+          _c("div", { staticClass: "row" }, [
+            _c("div", { staticClass: "col-12" }, [
+              _c("div", { staticClass: "section-title" }, [
+                _c("h2", [_vm._v("Influencer")]),
+                _vm._v(" "),
+                _c("p", [
+                  _vm._v(
+                    "Got followers on Social Media? Are your posts usually flooded with likes? How about getting financial returns for posting pictures with your Favorite brands.\n                        "
+                  )
+                ])
+              ])
+            ])
+          ]),
+          _vm._v(" "),
+          _c("div", { staticClass: "row" }, [
+            _c("div", { staticClass: "col-12" }, [
+              _c("div", { staticClass: "working-process-wrapper reveal" }, [
+                _c("ul", { staticClass: "working-process-list" }, [
+                  _c("li", { staticClass: "working-process-list-item" }, [
+                    _c("span", { staticClass: "working-process__icon" }, [
+                      _c("i", {
+                        staticClass: "fa fa-dollar",
+                        staticStyle: {
+                          color: "#65cadb",
+                          "font-size": "2.625rem",
+                          "line-height": "5.8125rem"
+                        }
+                      })
+                    ]),
+                    _vm._v(" "),
+                    _c("div", [
+                      _c("h5", { staticClass: "working-process__title" }, [
+                        _vm._v("Earn Money")
+                      ]),
+                      _vm._v(" "),
+                      _c("p", { staticClass: "working-process__description" }, [
+                        _vm._v(
+                          "Generate remuneration for doing what you love-sharing inspirational photos, videos and engaging content.\n                                    "
+                        )
+                      ])
+                    ])
+                  ]),
+                  _vm._v(" "),
+                  _c("li", { staticClass: "working-process-list-item" }, [
+                    _c("span", { staticClass: "working-process__icon" }, [
+                      _c("i", {
+                        staticClass: "nc-icon nc-p-heart",
+                        staticStyle: { "font-weight": "700" }
+                      })
+                    ]),
+                    _vm._v(" "),
+                    _c("div", [
+                      _c("h5", { staticClass: "working-process__title" }, [
+                        _vm._v("Build Personal Brand")
+                      ]),
+                      _vm._v(" "),
+                      _c("p", { staticClass: "working-process__description" }, [
+                        _vm._v(
+                          "Associate with Nepal’s biggest brands and get opportunities to network with top influencers to build your profile.\n\n                                    "
+                        )
+                      ])
+                    ])
+                  ]),
+                  _vm._v(" "),
+                  _c("li", { staticClass: "working-process-list-item" }, [
+                    _c("span", { staticClass: "working-process__icon" }, [
+                      _c("i", {
+                        staticClass: "nc-icon nc-chart-bar-33",
+                        staticStyle: { "font-weight": "700" }
+                      })
+                    ]),
+                    _vm._v(" "),
+                    _c("div", [
+                      _c("h5", { staticClass: "working-process__title" }, [
+                        _vm._v("Professionals Growth")
+                      ]),
+                      _vm._v(" "),
+                      _c("p", { staticClass: "working-process__description" }, [
+                        _vm._v(
+                          "Influencers maximize on earnings and professional growth through a constant flow of opportunities that fit their audience and personal brand.\n                                    "
+                        )
+                      ])
+                    ])
+                  ])
+                ])
+              ])
+            ])
+          ])
+        ])
+      ]
+    )
+  },
+  function() {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c(
+      "section",
+      { staticClass: "testimonial-two", attrs: { id: "testimonial" } },
+      [
+        _c("div", { staticClass: "container" }, [
+          _c("div", { staticClass: "row" }, [
+            _c("div", { staticClass: "col-12" }, [
+              _c("div", { staticClass: "section-title light" }, [
+                _c("h2", [_vm._v("What our influencers have to say?")]),
+                _vm._v(" "),
+                _c("p", [
+                  _vm._v(
+                    "Our influencers are pretty amazing. They're smart, authentic and empowering personals.\n                        "
+                  )
+                ])
+              ])
+            ])
+          ]),
+          _vm._v(" "),
+          _c("div", { staticClass: "row" }, [
+            _c("div", { staticClass: "col-12 col-lg-7 mx-auto" }, [
+              _c(
+                "div",
+                {
+                  staticClass:
+                    "testimonial reveal slick-initialized slick-slider",
+                  staticStyle: {
+                    visibility: "visible",
+                    "-webkit-transform": "translateY(0) scale(1)",
+                    opacity: "1",
+                    transform: "translateY(0) scale(1)",
+                    "-webkit-transition":
+                      "-webkit-transform 1s ease-in-out 0s, opacity 1s ease-in-out 0s",
+                    transition:
+                      "transform 1s ease-in-out 0s, opacity 1s ease-in-out 0s"
+                  },
+                  attrs: { "data-sr-id": "5" }
+                },
+                [
+                  _c("div", { staticClass: "slick-arrow" }, [
+                    _c("button", { staticClass: "prevArrow arrowBtn" }, [
+                      _c("i", { staticClass: "nc-icon nc-tail-left" })
+                    ])
+                  ]),
+                  _vm._v(" "),
+                  _c("div", { staticClass: "slick-list draggable" }, [
+                    _c(
+                      "div",
+                      {
+                        staticClass: "slick-track",
+                        staticStyle: {
+                          opacity: "1",
+                          width: "4445px",
+                          transform: "translate3d(-635px, 0px, 0px)"
+                        }
+                      },
+                      [
+                        _c(
+                          "div",
+                          {
+                            staticClass: "slick-slide slick-cloned",
+                            staticStyle: { width: "635px" },
+                            attrs: {
+                              "data-slick-index": "-1",
+                              "aria-hidden": "true",
+                              tabindex: "-1"
+                            }
+                          },
+                          [
+                            _c("div", [
+                              _c(
+                                "div",
+                                {
+                                  staticClass: "testimonial-item",
+                                  staticStyle: {
+                                    width: "100%",
+                                    display: "inline-block"
+                                  }
+                                },
+                                [
+                                  _c(
+                                    "div",
+                                    { staticClass: "testimonial-content" },
+                                    [
+                                      _c(
+                                        "span",
+                                        { staticClass: "testimonial__avatar" },
+                                        [
+                                          _c("img", {
+                                            attrs: {
+                                              src:
+                                                "http://127.0.0.1:8000/backend/assets/img/testimonials/Sadichha_WGswX2F3gRsDiLBB.png",
+                                              alt: "avatar"
+                                            }
+                                          })
+                                        ]
+                                      ),
+                                      _vm._v(" "),
+                                      _c("div", [
+                                        _c(
+                                          "blockquote",
+                                          {
+                                            staticClass: "testimonial__quote",
+                                            staticStyle: {
+                                              "text-align": "justify",
+                                              "font-family": "sans-serif"
+                                            }
+                                          },
+                                          [
+                                            _vm._v(
+                                              '"Being a part of Uptrendly has been a lot of fun. They have given me an opportunity to connect different brands and people on a personal and professional level."\n                                                    '
+                                            )
+                                          ]
+                                        ),
+                                        _vm._v(" "),
+                                        _c(
+                                          "h5",
+                                          {
+                                            staticClass:
+                                              "testimonial__customer-name",
+                                            staticStyle: { float: "right" }
+                                          },
+                                          [_vm._v("-Sadichha Shrestha")]
+                                        )
+                                      ])
+                                    ]
+                                  )
+                                ]
+                              )
+                            ])
+                          ]
+                        ),
+                        _vm._v(" "),
+                        _c(
+                          "div",
+                          {
+                            staticClass:
+                              "slick-slide slick-current slick-active",
+                            staticStyle: { width: "635px" },
+                            attrs: {
+                              "data-slick-index": "0",
+                              "aria-hidden": "false"
+                            }
+                          },
+                          [
+                            _c("div", [
+                              _c(
+                                "div",
+                                {
+                                  staticClass: "testimonial-item",
+                                  staticStyle: {
+                                    width: "100%",
+                                    display: "inline-block"
+                                  }
+                                },
+                                [
+                                  _c(
+                                    "div",
+                                    { staticClass: "testimonial-content" },
+                                    [
+                                      _c(
+                                        "span",
+                                        { staticClass: "testimonial__avatar" },
+                                        [
+                                          _c("img", {
+                                            attrs: {
+                                              src:
+                                                "http://127.0.0.1:8000/backend/assets/img/testimonials/Malvika_ynnfLYXil0EsruEp.png",
+                                              alt: "avatar"
+                                            }
+                                          })
+                                        ]
+                                      ),
+                                      _vm._v(" "),
+                                      _c("div", [
+                                        _c(
+                                          "blockquote",
+                                          {
+                                            staticClass: "testimonial__quote",
+                                            staticStyle: {
+                                              "text-align": "justify",
+                                              "font-family": "sans-serif"
+                                            }
+                                          },
+                                          [
+                                            _vm._v(
+                                              '"It has been great working with Uptrendly. Super professional and thorough with their work. Look forward to more work with them."\n                                                    '
+                                            )
+                                          ]
+                                        ),
+                                        _vm._v(" "),
+                                        _c(
+                                          "h5",
+                                          {
+                                            staticClass:
+                                              "testimonial__customer-name",
+                                            staticStyle: { float: "right" }
+                                          },
+                                          [_vm._v("-Malvika Subba")]
+                                        )
+                                      ])
+                                    ]
+                                  )
+                                ]
+                              )
+                            ])
+                          ]
+                        ),
+                        _vm._v(" "),
+                        _c(
+                          "div",
+                          {
+                            staticClass: "slick-slide",
+                            staticStyle: { width: "635px" },
+                            attrs: {
+                              "data-slick-index": "1",
+                              "aria-hidden": "true",
+                              tabindex: "-1"
+                            }
+                          },
+                          [
+                            _c("div", [
+                              _c(
+                                "div",
+                                {
+                                  staticClass: "testimonial-item",
+                                  staticStyle: {
+                                    width: "100%",
+                                    display: "inline-block"
+                                  }
+                                },
+                                [
+                                  _c(
+                                    "div",
+                                    { staticClass: "testimonial-content" },
+                                    [
+                                      _c(
+                                        "span",
+                                        { staticClass: "testimonial__avatar" },
+                                        [
+                                          _c("img", {
+                                            attrs: {
+                                              src:
+                                                "http://127.0.0.1:8000/backend/assets/img/testimonials/Anil_SfmsmFSdMKOYASwQ.png",
+                                              alt: "avatar"
+                                            }
+                                          })
+                                        ]
+                                      ),
+                                      _vm._v(" "),
+                                      _c("div", [
+                                        _c(
+                                          "blockquote",
+                                          {
+                                            staticClass: "testimonial__quote",
+                                            staticStyle: {
+                                              "text-align": "justify",
+                                              "font-family": "sans-serif"
+                                            }
+                                          },
+                                          [
+                                            _vm._v(
+                                              '"Really excited about Uptrendly! An exciting innovation coming in the digital marketing sector that will bring about infinite oppotunities for brands and influencers. I am privileged to be one of the\n                                                        influencers of the future of marketing. #uptrendly #nextbigthing"\n                                                    '
+                                            )
+                                          ]
+                                        ),
+                                        _vm._v(" "),
+                                        _c(
+                                          "h5",
+                                          {
+                                            staticClass:
+                                              "testimonial__customer-name",
+                                            staticStyle: { float: "right" }
+                                          },
+                                          [_vm._v("-Anil Shah")]
+                                        )
+                                      ])
+                                    ]
+                                  )
+                                ]
+                              )
+                            ])
+                          ]
+                        ),
+                        _vm._v(" "),
+                        _c(
+                          "div",
+                          {
+                            staticClass: "slick-slide",
+                            staticStyle: { width: "635px" },
+                            attrs: {
+                              "data-slick-index": "2",
+                              "aria-hidden": "true",
+                              tabindex: "-1"
+                            }
+                          },
+                          [
+                            _c("div", [
+                              _c(
+                                "div",
+                                {
+                                  staticClass: "testimonial-item",
+                                  staticStyle: {
+                                    width: "100%",
+                                    display: "inline-block"
+                                  }
+                                },
+                                [
+                                  _c(
+                                    "div",
+                                    { staticClass: "testimonial-content" },
+                                    [
+                                      _c(
+                                        "span",
+                                        { staticClass: "testimonial__avatar" },
+                                        [
+                                          _c("img", {
+                                            attrs: {
+                                              src:
+                                                "http://127.0.0.1:8000/backend/assets/img/testimonials/Sadichha_WGswX2F3gRsDiLBB.png",
+                                              alt: "avatar"
+                                            }
+                                          })
+                                        ]
+                                      ),
+                                      _vm._v(" "),
+                                      _c("div", [
+                                        _c(
+                                          "blockquote",
+                                          {
+                                            staticClass: "testimonial__quote",
+                                            staticStyle: {
+                                              "text-align": "justify",
+                                              "font-family": "sans-serif"
+                                            }
+                                          },
+                                          [
+                                            _vm._v(
+                                              '"Being a part of Uptrendly has been a lot of fun. They have given me an opportunity to connect different brands and people on a personal and professional level."\n                                                    '
+                                            )
+                                          ]
+                                        ),
+                                        _vm._v(" "),
+                                        _c(
+                                          "h5",
+                                          {
+                                            staticClass:
+                                              "testimonial__customer-name",
+                                            staticStyle: { float: "right" }
+                                          },
+                                          [_vm._v("-Sadichha Shrestha")]
+                                        )
+                                      ])
+                                    ]
+                                  )
+                                ]
+                              )
+                            ])
+                          ]
+                        ),
+                        _vm._v(" "),
+                        _c(
+                          "div",
+                          {
+                            staticClass: "slick-slide slick-cloned",
+                            staticStyle: { width: "635px" },
+                            attrs: {
+                              "data-slick-index": "3",
+                              "aria-hidden": "true",
+                              tabindex: "-1"
+                            }
+                          },
+                          [
+                            _c("div", [
+                              _c(
+                                "div",
+                                {
+                                  staticClass: "testimonial-item",
+                                  staticStyle: {
+                                    width: "100%",
+                                    display: "inline-block"
+                                  }
+                                },
+                                [
+                                  _c(
+                                    "div",
+                                    { staticClass: "testimonial-content" },
+                                    [
+                                      _c(
+                                        "span",
+                                        { staticClass: "testimonial__avatar" },
+                                        [
+                                          _c("img", {
+                                            attrs: {
+                                              src:
+                                                "http://127.0.0.1:8000/backend/assets/img/testimonials/Malvika_ynnfLYXil0EsruEp.png",
+                                              alt: "avatar"
+                                            }
+                                          })
+                                        ]
+                                      ),
+                                      _vm._v(" "),
+                                      _c("div", [
+                                        _c(
+                                          "blockquote",
+                                          {
+                                            staticClass: "testimonial__quote",
+                                            staticStyle: {
+                                              "text-align": "justify",
+                                              "font-family": "sans-serif"
+                                            }
+                                          },
+                                          [
+                                            _vm._v(
+                                              '"It has been great working with Uptrendly. Super professional and thorough with their work. Look forward to more work with them."\n                                                    '
+                                            )
+                                          ]
+                                        ),
+                                        _vm._v(" "),
+                                        _c(
+                                          "h5",
+                                          {
+                                            staticClass:
+                                              "testimonial__customer-name",
+                                            staticStyle: { float: "right" }
+                                          },
+                                          [_vm._v("-Malvika Subba")]
+                                        )
+                                      ])
+                                    ]
+                                  )
+                                ]
+                              )
+                            ])
+                          ]
+                        ),
+                        _vm._v(" "),
+                        _c(
+                          "div",
+                          {
+                            staticClass: "slick-slide slick-cloned",
+                            staticStyle: { width: "635px" },
+                            attrs: {
+                              "data-slick-index": "4",
+                              "aria-hidden": "true",
+                              tabindex: "-1"
+                            }
+                          },
+                          [
+                            _c("div", [
+                              _c(
+                                "div",
+                                {
+                                  staticClass: "testimonial-item",
+                                  staticStyle: {
+                                    width: "100%",
+                                    display: "inline-block"
+                                  }
+                                },
+                                [
+                                  _c(
+                                    "div",
+                                    { staticClass: "testimonial-content" },
+                                    [
+                                      _c(
+                                        "span",
+                                        { staticClass: "testimonial__avatar" },
+                                        [
+                                          _c("img", {
+                                            attrs: {
+                                              src:
+                                                "http://127.0.0.1:8000/backend/assets/img/testimonials/Anil_SfmsmFSdMKOYASwQ.png",
+                                              alt: "avatar"
+                                            }
+                                          })
+                                        ]
+                                      ),
+                                      _vm._v(" "),
+                                      _c("div", [
+                                        _c(
+                                          "blockquote",
+                                          {
+                                            staticClass: "testimonial__quote",
+                                            staticStyle: {
+                                              "text-align": "justify",
+                                              "font-family": "sans-serif"
+                                            }
+                                          },
+                                          [
+                                            _vm._v(
+                                              '"Really excited about Uptrendly! An exciting innovation coming in the digital marketing sector that will bring about infinite oppotunities for brands and influencers. I am privileged to be one of the\n                                                        influencers of the future of marketing. #uptrendly #nextbigthing"\n                                                    '
+                                            )
+                                          ]
+                                        ),
+                                        _vm._v(" "),
+                                        _c(
+                                          "h5",
+                                          {
+                                            staticClass:
+                                              "testimonial__customer-name",
+                                            staticStyle: { float: "right" }
+                                          },
+                                          [_vm._v("-Anil Shah")]
+                                        )
+                                      ])
+                                    ]
+                                  )
+                                ]
+                              )
+                            ])
+                          ]
+                        ),
+                        _vm._v(" "),
+                        _c(
+                          "div",
+                          {
+                            staticClass: "slick-slide slick-cloned",
+                            staticStyle: { width: "635px" },
+                            attrs: {
+                              "data-slick-index": "5",
+                              "aria-hidden": "true",
+                              tabindex: "-1"
+                            }
+                          },
+                          [
+                            _c("div", [
+                              _c(
+                                "div",
+                                {
+                                  staticClass: "testimonial-item",
+                                  staticStyle: {
+                                    width: "100%",
+                                    display: "inline-block"
+                                  }
+                                },
+                                [
+                                  _c(
+                                    "div",
+                                    { staticClass: "testimonial-content" },
+                                    [
+                                      _c(
+                                        "span",
+                                        { staticClass: "testimonial__avatar" },
+                                        [
+                                          _c("img", {
+                                            attrs: {
+                                              src:
+                                                "http://127.0.0.1:8000/backend/assets/img/testimonials/Sadichha_WGswX2F3gRsDiLBB.png",
+                                              alt: "avatar"
+                                            }
+                                          })
+                                        ]
+                                      ),
+                                      _vm._v(" "),
+                                      _c("div", [
+                                        _c(
+                                          "blockquote",
+                                          {
+                                            staticClass: "testimonial__quote",
+                                            staticStyle: {
+                                              "text-align": "justify",
+                                              "font-family": "sans-serif"
+                                            }
+                                          },
+                                          [
+                                            _vm._v(
+                                              '"Being a part of Uptrendly has been a lot of fun. They have given me an opportunity to connect different brands and people on a personal and professional level."\n                                                    '
+                                            )
+                                          ]
+                                        ),
+                                        _vm._v(" "),
+                                        _c(
+                                          "h5",
+                                          {
+                                            staticClass:
+                                              "testimonial__customer-name",
+                                            staticStyle: { float: "right" }
+                                          },
+                                          [_vm._v("-Sadichha Shrestha")]
+                                        )
+                                      ])
+                                    ]
+                                  )
+                                ]
+                              )
+                            ])
+                          ]
+                        )
+                      ]
+                    )
+                  ]),
+                  _vm._v(" "),
+                  _c("div", { staticClass: "slick-arrow" }, [
+                    _c("button", { staticClass: "nextArrow arrowBtn" }, [
+                      _c("i", { staticClass: "nc-icon nc-tail-right" })
+                    ])
+                  ])
+                ]
+              )
+            ])
+          ])
+        ])
+      ]
+    )
+  }
+]
+render._withStripped = true
+module.exports = { render: render, staticRenderFns: staticRenderFns }
+if (false) {
+  module.hot.accept()
+  if (module.hot.data) {
+    require("vue-hot-reload-api")      .rerender("data-v-6b822e44", module.exports)
+  }
+}
+
+/***/ }),
+/* 19 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var disposed = false
+var normalizeComponent = __webpack_require__(0)
+/* script */
+var __vue_script__ = null
+/* template */
+var __vue_template__ = __webpack_require__(20)
+/* template functional */
+var __vue_template_functional__ = false
+/* styles */
+var __vue_styles__ = null
+/* scopeId */
+var __vue_scopeId__ = null
+/* moduleIdentifier (server only) */
+var __vue_module_identifier__ = null
+var Component = normalizeComponent(
+  __vue_script__,
+  __vue_template__,
+  __vue_template_functional__,
+  __vue_styles__,
+  __vue_scopeId__,
+  __vue_module_identifier__
+)
+Component.options.__file = "resources/js/views/landingInfluencer.vue"
+
+/* hot reload */
+if (false) {(function () {
+  var hotAPI = require("vue-hot-reload-api")
+  hotAPI.install(require("vue"), false)
+  if (!hotAPI.compatible) return
+  module.hot.accept()
+  if (!module.hot.data) {
+    hotAPI.createRecord("data-v-1daf56b6", Component.options)
+  } else {
+    hotAPI.reload("data-v-1daf56b6", Component.options)
+  }
+  module.hot.dispose(function (data) {
+    disposed = true
+  })
+})()}
+
+module.exports = Component.exports
+
+
+/***/ }),
+/* 20 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var render = function() {
+  var _vm = this
+  var _h = _vm.$createElement
+  var _c = _vm._self._c || _h
+  return _vm._m(0)
+}
+var staticRenderFns = [
+  function() {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("div", [
+      _c("section", { staticClass: "hero-four hero-text-dark content-left " }, [
+        _c("div", { staticClass: "container" }, [
+          _c("div", { staticClass: "row" }, [
+            _c("div", { staticClass: "col-12" }, [
+              _c("div", { staticClass: "hero" }, [
+                _c("div", { staticClass: "hero-wrapper" }, [
+                  _c("div", { staticClass: "hero-content" }, [
+                    _c(
+                      "h1",
+                      {
+                        staticClass: "hero__title",
+                        staticStyle: {
+                          "font-weight": "600",
+                          "font-size": "1.9em"
+                        }
+                      },
+                      [_vm._v("Monetize Your Passion")]
+                    ),
+                    _vm._v(" "),
+                    _c("p", { staticClass: "hero__caption" }, [
+                      _vm._v(
+                        "\n                                    Got followers on Social Media? Are your posts usually flooded with likes? How about getting financial returns for posting pictures with your Favorite brands."
+                      )
+                    ]),
+                    _vm._v(" "),
+                    _c("div", { staticClass: "newsletter-optin" }, [
+                      _c(
+                        "a",
+                        {
+                          staticClass: "db-btn db-btn__blue db-btn__type-sm",
+                          attrs: {
+                            href:
+                              "http://10.10.30.196:8000/choose-social-account"
+                          }
+                        },
+                        [_vm._v("Be Influencer and Get Paid")]
+                      )
+                    ])
+                  ]),
+                  _vm._v(" "),
+                  _c(
+                    "div",
+                    {
+                      staticClass: "hero-media reveal",
+                      staticStyle: {
+                        visibility: "visible",
+                        "-webkit-transform": "translateY(0) scale(1)",
+                        opacity: "1",
+                        transform: "translateY(0) scale(1)",
+                        "-webkit-transition":
+                          "-webkit-transform 1s ease-in-out 0s, opacity 1s ease-in-out 0s",
+                        transition:
+                          "transform 1s ease-in-out 0s, opacity 1s ease-in-out 0s"
+                      },
+                      attrs: { "data-sr-id": "1" }
+                    },
+                    [
+                      _c("img", {
+                        staticStyle: { width: "750px" },
+                        attrs: {
+                          src:
+                            "http://10.10.30.196:8000/frontend/img/influencers/i1.png",
+                          alt: "hero-media__img"
+                        }
+                      })
+                    ]
+                  )
+                ])
+              ])
+            ])
+          ])
+        ])
+      ]),
+      _vm._v(" "),
+      _c(
+        "section",
+        {
+          staticClass: "working-process",
+          staticStyle: { "padding-top": "30px" },
+          attrs: { id: "services" }
+        },
+        [
+          _c("div", { staticClass: "container" }, [
+            _c("div", { staticClass: "row" }, [
+              _c("div", { staticClass: "col-12" }, [
+                _c(
+                  "div",
+                  {
+                    staticClass: "working-process-wrapper reveal",
+                    staticStyle: {
+                      visibility: "visible",
+                      "-webkit-transform": "translateY(0) scale(1)",
+                      opacity: "1",
+                      transform: "translateY(0) scale(1)",
+                      "-webkit-transition":
+                        "-webkit-transform 1s ease-in-out 0s, opacity 1s ease-in-out 0s",
+                      transition:
+                        "transform 1s ease-in-out 0s, opacity 1s ease-in-out 0s"
+                    },
+                    attrs: { "data-sr-id": "2" }
+                  },
+                  [
+                    _c("ul", { staticClass: "working-process-list" }, [
+                      _c("li", { staticClass: "working-process-list-item" }, [
+                        _c("span", { staticClass: "working-process__icon" }, [
+                          _c("i", {
+                            staticClass: "fa fa-dollar",
+                            staticStyle: {
+                              color: "#65cadb",
+                              "font-size": "2.625rem",
+                              "line-height": "5.8125rem"
+                            }
+                          })
+                        ]),
+                        _vm._v(" "),
+                        _c("div", [
+                          _c("h5", { staticClass: "working-process__title" }, [
+                            _vm._v("Earn Money")
+                          ]),
+                          _vm._v(" "),
+                          _c(
+                            "p",
+                            { staticClass: "working-process__description" },
+                            [
+                              _vm._v(
+                                "Generate remuneration for doing what you love-sharing inspirational photos, videos and engaging content.\n                                "
+                              )
+                            ]
+                          )
+                        ])
+                      ]),
+                      _vm._v(" "),
+                      _c("li", { staticClass: "working-process-list-item" }, [
+                        _c("span", { staticClass: "working-process__icon" }, [
+                          _c("i", {
+                            staticClass: "nc-icon nc-p-heart",
+                            staticStyle: { "font-weight": "700" }
+                          })
+                        ]),
+                        _vm._v(" "),
+                        _c("div", [
+                          _c("h5", { staticClass: "working-process__title" }, [
+                            _vm._v("Build Personal Brand")
+                          ]),
+                          _vm._v(" "),
+                          _c(
+                            "p",
+                            { staticClass: "working-process__description" },
+                            [
+                              _vm._v(
+                                "Associate with Nepal’s biggest brands and get opportunities to network with top influencers to build your profile.\n\n                                "
+                              )
+                            ]
+                          )
+                        ])
+                      ]),
+                      _vm._v(" "),
+                      _c("li", { staticClass: "working-process-list-item" }, [
+                        _c("span", { staticClass: "working-process__icon" }, [
+                          _c("i", {
+                            staticClass: "nc-icon nc-chart-bar-33",
+                            staticStyle: { "font-weight": "700" }
+                          })
+                        ]),
+                        _vm._v(" "),
+                        _c("div", [
+                          _c("h5", { staticClass: "working-process__title" }, [
+                            _vm._v("Professionals Growth")
+                          ]),
+                          _vm._v(" "),
+                          _c(
+                            "p",
+                            { staticClass: "working-process__description" },
+                            [
+                              _vm._v(
+                                "Influencers maximize on earnings and professional growth through a constant flow of opportunities that fit their audience and personal brand.\n                                "
+                              )
+                            ]
+                          )
+                        ])
+                      ])
+                    ])
+                  ]
+                )
+              ])
+            ])
+          ])
+        ]
+      ),
+      _vm._v(" "),
+      _c(
+        "section",
+        { staticClass: "how-it-works add viewport-section in-viewport" },
+        [
+          _c("div", { staticClass: "static-container" }, [
+            _c("header", { staticClass: "section-heading in-viewport" }, [
+              _c("span", { staticClass: "sub-title" }, [
+                _vm._v("how it works")
+              ]),
+              _c("h2", [_vm._v("Getting Started is Simple")])
+            ]),
+            _vm._v(" "),
+            _c("div", { staticClass: "grid-flex" }, [
+              _c("div", { staticClass: "col-sm-6 col-md-offset-1 col-md-4" }, [
+                _c("ul", { staticClass: "process-detail-list" }, [
+                  _c("li", { staticStyle: { "transition-delay": "0ms" } }, [
+                    _c("h3", [
+                      _c("span", { staticClass: "number" }, [_vm._v("01")]),
+                      _vm._v("Get Registered")
+                    ]),
+                    _vm._v(" "),
+                    _c("p", { staticStyle: { color: "#fff" } }, [
+                      _vm._v(
+                        "The basic requirement for you to get registered is to have a strong media presence minimum 5k followers in your Instagram handle."
+                      )
+                    ])
+                  ]),
+                  _vm._v(" "),
+                  _c("li", { staticStyle: { "transition-delay": "250ms" } }, [
+                    _c("h3", [
+                      _c("span", { staticClass: "number" }, [_vm._v("02")]),
+                      _vm._v("Get Campaign")
+                    ]),
+                    _vm._v(" "),
+                    _c("p", { staticStyle: { color: "#fff" } }, [
+                      _vm._v(
+                        "You can get opportunity to be part of different campaign from various brands. The better follower you have the better chance of getting big campaigns. The campaign duration can last from a month till a yearlong campaign."
+                      )
+                    ])
+                  ]),
+                  _vm._v(" "),
+                  _c("li", { staticStyle: { "transition-delay": "500ms" } }, [
+                    _c("h3", [
+                      _c("span", { staticClass: "number" }, [_vm._v("03")]),
+                      _vm._v("Get paid")
+                    ]),
+                    _vm._v(" "),
+                    _c("p", { staticStyle: { color: "#fff" } }, [
+                      _vm._v(
+                        "Once you complete your required post share in your social media handles, your payment will be deposited in your provided bank details."
+                      )
+                    ])
+                  ])
+                ])
+              ]),
+              _vm._v(" "),
+              _c("div", { staticClass: "col-sm-6 col-md-offset-1 col-md-6" }, [
+                _c("ul", { staticClass: "process-list" }, [
+                  _c("li", [
+                    _c("strong", { staticClass: "process-title" }, [
+                      _vm._v("Uptrendly Platform")
+                    ])
+                  ]),
+                  _vm._v(" "),
+                  _c("li", [
+                    _c("div", { staticClass: "inner-hold" }, [
+                      _c("div", { staticClass: "ico-hold" }, [
+                        _c("img", {
+                          staticStyle: { width: "97px", height: "97px" },
+                          attrs: {
+                            src:
+                              "http://10.10.30.196:8000/frontend/img/ico08.png?29ec308166c25ec3",
+                            alt: ""
+                          }
+                        })
+                      ]),
+                      _c("span", { staticClass: "caption" }, [
+                        _vm._v("Get Registered\n                            ")
+                      ])
+                    ])
+                  ]),
+                  _vm._v(" "),
+                  _c("li", [
+                    _c("div", { staticClass: "inner-hold" }, [
+                      _c("div", { staticClass: "ico-hold" }, [
+                        _c("img", {
+                          staticStyle: { width: "97px", height: "97px" },
+                          attrs: {
+                            src:
+                              "http://10.10.30.196:8000/frontend/img/ico09.png?29ec308166c25ec3",
+                            alt: ""
+                          }
+                        })
+                      ]),
+                      _c("span", { staticClass: "caption" }, [
+                        _vm._v("Get Campaing")
+                      ])
+                    ])
+                  ]),
+                  _vm._v(" "),
+                  _c("div", { staticClass: "inner-hold" }, [
+                    _c("div", { staticClass: "ico-hold" }, [
+                      _c("img", {
+                        staticStyle: {
+                          position: "relative",
+                          width: "97px",
+                          height: "97px",
+                          "z-index": "99"
+                        },
+                        attrs: {
+                          src:
+                            "http://10.10.30.196:8000/frontend/img/ico10.png?29ec308166c25ec3",
+                          alt: ""
+                        }
+                      })
+                    ]),
+                    _c("span", { staticClass: "caption" }, [
+                      _vm._v("Get\n                            paid")
+                    ])
+                  ])
+                ])
+              ])
+            ])
+          ])
+        ]
+      )
+    ])
+  }
+]
+render._withStripped = true
+module.exports = { render: render, staticRenderFns: staticRenderFns }
+if (false) {
+  module.hot.accept()
+  if (module.hot.data) {
+    require("vue-hot-reload-api")      .rerender("data-v-1daf56b6", module.exports)
+  }
+}
+
+/***/ }),
+/* 21 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var disposed = false
+var normalizeComponent = __webpack_require__(0)
+/* script */
+var __vue_script__ = null
+/* template */
+var __vue_template__ = __webpack_require__(22)
+/* template functional */
+var __vue_template_functional__ = false
+/* styles */
+var __vue_styles__ = null
+/* scopeId */
+var __vue_scopeId__ = null
+/* moduleIdentifier (server only) */
+var __vue_module_identifier__ = null
+var Component = normalizeComponent(
+  __vue_script__,
+  __vue_template__,
+  __vue_template_functional__,
+  __vue_styles__,
+  __vue_scopeId__,
+  __vue_module_identifier__
+)
+Component.options.__file = "resources/js/views/landingbrand.vue"
+
+/* hot reload */
+if (false) {(function () {
+  var hotAPI = require("vue-hot-reload-api")
+  hotAPI.install(require("vue"), false)
+  if (!hotAPI.compatible) return
+  module.hot.accept()
+  if (!module.hot.data) {
+    hotAPI.createRecord("data-v-2ec9f762", Component.options)
+  } else {
+    hotAPI.reload("data-v-2ec9f762", Component.options)
+  }
+  module.hot.dispose(function (data) {
+    disposed = true
+  })
+})()}
+
+module.exports = Component.exports
+
+
+/***/ }),
+/* 22 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var render = function() {
+  var _vm = this
+  var _h = _vm.$createElement
+  var _c = _vm._self._c || _h
+  return _vm._m(0)
+}
+var staticRenderFns = [
+  function() {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("div", [
+      _c("section", { staticClass: "hero-four hero-text-dark content-left " }, [
+        _c("div", { staticClass: "container" }, [
+          _c("div", { staticClass: "row" }, [
+            _c("div", { staticClass: "col-12" }, [
+              _c("div", { staticClass: "hero" }, [
+                _c("div", { staticClass: "hero-wrapper" }, [
+                  _c("div", { staticClass: "hero-content" }, [
+                    _c("h6", [_vm._v("Influencer Marketing Made Easy")]),
+                    _vm._v(" "),
+                    _c(
+                      "h1",
+                      {
+                        staticClass: "hero__title",
+                        staticStyle: {
+                          "font-weight": "600",
+                          "font-size": "1.9em"
+                        }
+                      },
+                      [_vm._v("Nepal's only Influence marketing platform.")]
+                    ),
+                    _vm._v(" "),
+                    _c("p", { staticClass: "hero__caption" }, [
+                      _vm._v(
+                        "\n                                    With Uptrendly you can launch a campaign for free, receive proposals from interested influencers and easily track the metrics that matter all in one place."
+                      )
+                    ]),
+                    _vm._v(" "),
+                    _c("div", { staticClass: "newsletter-optin" }, [
+                      _c(
+                        "a",
+                        {
+                          staticClass: "db-btn db-btn__blue db-btn__type-sm",
+                          staticStyle: {
+                            "margin-top": "50px",
+                            "border-radius": "30px",
+                            "font-size": "20px",
+                            "letter-spacing": "1px",
+                            "min-width": "191px",
+                            display: "inline-block",
+                            "box-shadow": "0 4px 10px rgba(57,71,90,.13)"
+                          },
+                          attrs: {
+                            href:
+                              "http://10.10.30.196:8000/choose-social-account"
+                          }
+                        },
+                        [_vm._v("Get Started for free")]
+                      )
+                    ])
+                  ]),
+                  _vm._v(" "),
+                  _c(
+                    "div",
+                    {
+                      staticClass: "hero-media reveal",
+                      staticStyle: {
+                        visibility: "visible",
+                        "-webkit-transform": "translateY(0) scale(1)",
+                        opacity: "1",
+                        transform: "translateY(0) scale(1)",
+                        "-webkit-transition":
+                          "-webkit-transform 1s ease-in-out 0s, opacity 1s ease-in-out 0s",
+                        transition:
+                          "transform 1s ease-in-out 0s, opacity 1s ease-in-out 0s"
+                      },
+                      attrs: { "data-sr-id": "1" }
+                    },
+                    [
+                      _c("picture", { staticClass: "hero-media__img" }, [
+                        _c("img", {
+                          staticStyle: { width: "750px" },
+                          attrs: {
+                            src:
+                              "http://10.10.30.196:8000/frontend/img/influencers/i1.png",
+                            alt: "hero-media__img"
+                          }
+                        })
+                      ]),
+                      _vm._v(" "),
+                      _c("span", { staticClass: "hero__circle" })
+                    ]
+                  )
+                ])
+              ])
+            ])
+          ])
+        ])
+      ]),
+      _vm._v(" "),
+      _c(
+        "section",
+        {
+          staticClass:
+            "hero-four hero-text-dark content-left features-one reveal background",
+          staticStyle: {
+            "margin-top": "0px",
+            visibility: "visible",
+            "-webkit-transform": "translateY(0) scale(1)",
+            opacity: "1",
+            transform: "translateY(0) scale(1)",
+            "-webkit-transition":
+              "-webkit-transform 1s ease-in-out 0s, opacity 1s ease-in-out 0s",
+            transition: "transform 1s ease-in-out 0s, opacity 1s ease-in-out 0s"
+          },
+          attrs: { "data-sr-id": "2" }
+        },
+        [
+          _c("div", { staticClass: "container" }, [
+            _c(
+              "div",
+              { staticClass: "row", staticStyle: { "margin-bottom": "170px" } },
+              [
+                _c("div", { staticClass: "col-md-6" }, [
+                  _c("img", {
+                    attrs: {
+                      src: "http://10.10.30.196:8000/img/img05.png",
+                      alt: "hero-media__img"
+                    }
+                  })
+                ]),
+                _vm._v(" "),
+                _c("div", { staticClass: "col-md-6" }, [
+                  _c(
+                    "h3",
+                    {
+                      staticStyle: {
+                        "padding-top": "27px",
+                        position: "relative",
+                        "font-size": "34px",
+                        "line-height": "1.27",
+                        "letter-spacing": "-.8px",
+                        "margin-bottom": "16px"
+                      }
+                    },
+                    [_vm._v("Tell Your Brand Story")]
+                  ),
+                  _vm._v(" "),
+                  _c(
+                    "p",
+                    {
+                      staticClass: "paragraph",
+                      staticStyle: { color: "black" }
+                    },
+                    [
+                      _vm._v(
+                        "Want millions of people to learn about your brand? You’re in the right place. Creators are this generation's storytellers, telling product stories in a way that no one else can. Their audience trusts them and looks to them for advice\n                        on the newest products, brands and services."
+                      )
+                    ]
+                  )
+                ])
+              ]
+            ),
+            _vm._v(" "),
+            _c("div", { staticClass: "row" }, [
+              _c("div", { staticClass: "col-12 col-md-4" }, [
+                _c("div", { staticClass: "feature" }, [
+                  _c("span", { staticClass: "feature__icon" }, [
+                    _c("i", { staticClass: "nc-icon nc-layers-3" })
+                  ]),
+                  _vm._v(" "),
+                  _c("h5", { staticClass: "feature__title" }, [
+                    _vm._v("Determine Your Goals")
+                  ]),
+                  _vm._v(" "),
+                  _c("p", { staticClass: "feature__description" }, [
+                    _vm._v(
+                      "We understand that you've set clear goals for your brand. We have helped brands live their vision and make the most out of their goals. "
+                    )
+                  ])
+                ])
+              ]),
+              _vm._v(" "),
+              _c("div", { staticClass: "col-12 col-md-4" }, [
+                _c("div", { staticClass: "feature" }, [
+                  _c("span", { staticClass: "feature__icon" }, [
+                    _c("i", { staticClass: "nc-icon nc-watch-circle" })
+                  ]),
+                  _vm._v(" "),
+                  _c("h5", { staticClass: "feature__title" }, [
+                    _vm._v("Measure Outcomes of Campaign")
+                  ]),
+                  _vm._v(" "),
+                  _c("p", { staticClass: "feature__description" }, [
+                    _vm._v(
+                      "Focus on reach, engagements, impressions in order to get your product to your target audience. Measure your brand success through statistics. "
+                    )
+                  ])
+                ])
+              ]),
+              _vm._v(" "),
+              _c("div", { staticClass: "col-12 col-md-4" }, [
+                _c("div", { staticClass: "feature" }, [
+                  _c("span", { staticClass: "feature__icon" }, [
+                    _c("i", { staticClass: "nc-icon nc-chart-bar-33" })
+                  ]),
+                  _vm._v(" "),
+                  _c("h5", { staticClass: "feature__title" }, [
+                    _vm._v("Find A Credible Influencer")
+                  ]),
+                  _vm._v(" "),
+                  _c("p", { staticClass: "feature__description" }, [
+                    _vm._v(
+                      "We have got you covered to identify the perfect influencer for your brand.\n\n                        "
+                    )
+                  ])
+                ])
+              ])
+            ])
+          ])
+        ]
+      ),
+      _vm._v(" "),
+      _c(
+        "section",
+        { staticClass: "how-it-works add viewport-section in-viewport" },
+        [
+          _c("div", { staticClass: "static-container" }, [
+            _c("header", { staticClass: "section-heading in-viewport" }, [
+              _c("span", { staticClass: "sub-title" }, [
+                _vm._v("how it works")
+              ]),
+              _vm._v(" "),
+              _c("h2", [_vm._v("Getting Started is Simple")])
+            ]),
+            _vm._v(" "),
+            _c("div", { staticClass: "grid-flex" }, [
+              _c("div", { staticClass: "col-sm-6 col-md-offset-1 col-md-4" }, [
+                _c("ul", { staticClass: "process-detail-list" }, [
+                  _c("li", { staticStyle: { "transition-delay": "0ms" } }, [
+                    _c("h3", [
+                      _c("span", { staticClass: "number" }, [_vm._v("01")]),
+                      _vm._v("Get Registered")
+                    ]),
+                    _vm._v(" "),
+                    _c("p", { staticStyle: { color: "#fff" } }, [
+                      _vm._v(
+                        "You need to be a well-known brand or a company to be part of Uptrendly. "
+                      )
+                    ])
+                  ]),
+                  _vm._v(" "),
+                  _c("li", { staticStyle: { "transition-delay": "250ms" } }, [
+                    _c("h3", [
+                      _c("span", { staticClass: "number" }, [_vm._v("02")]),
+                      _vm._v("Create Campaign")
+                    ]),
+                    _vm._v(" "),
+                    _c("p", { staticStyle: { color: "#fff" } }, [
+                      _vm._v(
+                        "Mention which product or service you want to promote and create campaigns accordingly which could include photo post and video post. The campaigns can last from a month to year long."
+                      )
+                    ])
+                  ]),
+                  _vm._v(" "),
+                  _c("li", { staticStyle: { "transition-delay": "500ms" } }, [
+                    _c("h3", [
+                      _c("span", { staticClass: "number" }, [_vm._v("03")]),
+                      _vm._v("Choose Influencers")
+                    ]),
+                    _vm._v(" "),
+                    _c("p", { staticStyle: { color: "#fff" } }, [
+                      _vm._v(
+                        "We have around 150 number of influencers which consists of various background like actors, singers, model, vloggers, corporate personalities and many more. According to the campaign criteria choose the appropriate influencers."
+                      )
+                    ])
+                  ]),
+                  _vm._v(" "),
+                  _c("li", { staticStyle: { "transition-delay": "500ms" } }, [
+                    _c("h3", [
+                      _c("span", { staticClass: "number" }, [_vm._v("04")]),
+                      _vm._v("Promote your product")
+                    ]),
+                    _vm._v(" "),
+                    _c("p", { staticStyle: { color: "#fff" } }, [
+                      _vm._v(
+                        "Create campaign, choose influencer and promote your product or services through influencer’s social media handles. Where you can reach your target audience."
+                      )
+                    ])
+                  ])
+                ])
+              ]),
+              _vm._v(" "),
+              _c("div", { staticClass: "col-sm-6 col-md-offset-1 col-md-6" }, [
+                _c("ul", { staticClass: "process-list" }, [
+                  _c("li", [
+                    _c("strong", { staticClass: "process-title" }, [
+                      _vm._v("Uptrendly Platform")
+                    ])
+                  ]),
+                  _vm._v(" "),
+                  _c("li", [
+                    _c("div", { staticClass: "inner-hold" }, [
+                      _c("div", { staticClass: "ico-hold" }, [
+                        _c("img", {
+                          staticStyle: { width: "97px", height: "97px" },
+                          attrs: {
+                            src:
+                              "http://10.10.30.196:8000/frontend/img/ico08.png?29ec308166c25ec3",
+                            alt: ""
+                          }
+                        })
+                      ]),
+                      _c("span", { staticClass: "caption" }, [
+                        _vm._v("Get Registered")
+                      ])
+                    ])
+                  ]),
+                  _vm._v(" "),
+                  _c("li", [
+                    _c("div", { staticClass: "inner-hold" }, [
+                      _c("div", { staticClass: "ico-hold" }, [
+                        _c("img", {
+                          staticStyle: { width: "97px", height: "97px" },
+                          attrs: {
+                            src:
+                              "http://10.10.30.196:8000/frontend/img/ico09.png?29ec308166c25ec3",
+                            alt: ""
+                          }
+                        })
+                      ]),
+                      _c("span", { staticClass: "caption" }, [
+                        _vm._v(
+                          "Create Campaign\n                                "
+                        )
+                      ])
+                    ])
+                  ]),
+                  _vm._v(" "),
+                  _c("li", [
+                    _c("div", { staticClass: "inner-hold" }, [
+                      _c("div", { staticClass: "ico-hold" }, [
+                        _c("img", {
+                          staticStyle: { width: "97px", height: "97px" },
+                          attrs: {
+                            src:
+                              "http://10.10.30.196:8000/frontend/img/ico10.png?29ec308166c25ec3",
+                            alt: ""
+                          }
+                        })
+                      ]),
+                      _c("span", { staticClass: "caption" }, [
+                        _vm._v(
+                          "Choose Influencers\n                                "
+                        )
+                      ])
+                    ])
+                  ]),
+                  _vm._v(" "),
+                  _c("div", { staticClass: "inner-hold" }, [
+                    _c("div", { staticClass: "ico-hold" }, [
+                      _c("img", {
+                        staticStyle: {
+                          width: "97px",
+                          height: "97px",
+                          "z-index": "1",
+                          position: "relative"
+                        },
+                        attrs: {
+                          src:
+                            "http://10.10.30.196:8000/frontend/img/ico10.png?29ec308166c25ec3",
+                          alt: ""
+                        }
+                      })
+                    ]),
+                    _c("span", { staticClass: "caption" }, [
+                      _vm._v("Promote your product")
+                    ])
+                  ])
+                ])
+              ])
+            ])
+          ])
+        ]
+      )
+    ])
+  }
+]
+render._withStripped = true
+module.exports = { render: render, staticRenderFns: staticRenderFns }
+if (false) {
+  module.hot.accept()
+  if (module.hot.data) {
+    require("vue-hot-reload-api")      .rerender("data-v-2ec9f762", module.exports)
+  }
+}
+
+/***/ }),
+/* 23 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var disposed = false
+var normalizeComponent = __webpack_require__(0)
+/* script */
+var __vue_script__ = null
+/* template */
+var __vue_template__ = __webpack_require__(24)
+/* template functional */
+var __vue_template_functional__ = false
+/* styles */
+var __vue_styles__ = null
+/* scopeId */
+var __vue_scopeId__ = null
+/* moduleIdentifier (server only) */
+var __vue_module_identifier__ = null
+var Component = normalizeComponent(
+  __vue_script__,
+  __vue_template__,
+  __vue_template_functional__,
+  __vue_styles__,
+  __vue_scopeId__,
+  __vue_module_identifier__
+)
+Component.options.__file = "resources/js/views/landingpricing.vue"
+
+/* hot reload */
+if (false) {(function () {
+  var hotAPI = require("vue-hot-reload-api")
+  hotAPI.install(require("vue"), false)
+  if (!hotAPI.compatible) return
+  module.hot.accept()
+  if (!module.hot.data) {
+    hotAPI.createRecord("data-v-1ab515e4", Component.options)
+  } else {
+    hotAPI.reload("data-v-1ab515e4", Component.options)
+  }
+  module.hot.dispose(function (data) {
+    disposed = true
+  })
+})()}
+
+module.exports = Component.exports
+
+
+/***/ }),
+/* 24 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var render = function() {
+  var _vm = this
+  var _h = _vm.$createElement
+  var _c = _vm._self._c || _h
+  return _vm._m(0)
+}
+var staticRenderFns = [
+  function() {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("div", [
+      _c(
+        "section",
+        {
+          staticClass: "pricing-one",
+          staticStyle: { "background-color": "white" },
+          attrs: { id: "pricing" }
+        },
+        [
+          _c("div", { staticClass: "container" }, [
+            _c("div", { staticClass: "row" }, [
+              _c("div", { staticClass: "col-12" }, [
+                _c("div", { staticClass: "section-title" }, [
+                  _c("h2", [_vm._v("Pricing Module")]),
+                  _vm._v(" "),
+                  _c("p", [
+                    _vm._v(
+                      "Although there is no strict rules when it comes to pricing on the most popular platform for Influencer Marketing, there are many ways to strategize your budget based on a plan.\n                        "
+                    )
+                  ])
+                ])
+              ])
+            ]),
+            _vm._v(" "),
+            _c("div", { staticClass: "row" }, [
+              _c(
+                "div",
+                {
+                  staticClass: "col-12 col-md-4",
+                  staticStyle: { "margin-bottom": "20px" }
+                },
+                [
+                  _c(
+                    "div",
+                    {
+                      staticClass: "prcing-table reveal not-selected",
+                      staticStyle: {
+                        height: "100%",
+                        visibility: "visible",
+                        "-webkit-transform": "translateY(0) scale(1)",
+                        opacity: "1",
+                        transform: "translateY(0) scale(1)",
+                        "-webkit-transition":
+                          "-webkit-transform 1s ease-in-out 0s, opacity 1s ease-in-out 0s",
+                        transition:
+                          "transform 1s ease-in-out 0s, opacity 1s ease-in-out 0s"
+                      },
+                      attrs: { "data-sr-id": "1" }
+                    },
+                    [
+                      _c("div", { staticClass: "pricing-header" }, [
+                        _c("h1", [_vm._v("Package 1 ")]),
+                        _vm._v(" "),
+                        _c("div", { staticClass: "plan-price" }, [
+                          _vm._v("Free")
+                        ]),
+                        _vm._v(" "),
+                        _c("div", { staticClass: "term" }, [_vm._v("Forever")]),
+                        _vm._v(" "),
+                        _c("div", { staticClass: "pricing-table" }, [
+                          _c("ul", [
+                            _c("li", { staticClass: "even" }, [
+                              _vm._v("Unlimited Searches")
+                            ]),
+                            _vm._v(" "),
+                            _c("li", { staticClass: "odd" }, [
+                              _vm._v("1 campaign")
+                            ]),
+                            _vm._v(" "),
+                            _c("li", { staticClass: "even opacity" }, [
+                              _vm._v("advisor for campaign")
+                            ]),
+                            _vm._v(" "),
+                            _c("li", { staticClass: "odd opacity" }, [
+                              _vm._v("dedicated manager and regular visit")
+                            ]),
+                            _vm._v(" "),
+                            _c("li", { staticClass: "even opacity" }, [
+                              _vm._v("detailed monthly report ")
+                            ]),
+                            _vm._v(" "),
+                            _c("li", { staticClass: "odd opacity" }, [
+                              _vm._v("Favourite list ")
+                            ]),
+                            _vm._v(" "),
+                            _c("li", { staticClass: "even opacity" }, [
+                              _vm._v("campaign tracking ")
+                            ]),
+                            _vm._v(" "),
+                            _c("li", { staticClass: "odd" }, [
+                              _vm._v("analyze details about influencer ")
+                            ]),
+                            _vm._v(" "),
+                            _c("li", { staticClass: "odd" }, [
+                              _vm._v("email and chat support ")
+                            ])
+                          ])
+                        ])
+                      ])
+                    ]
+                  )
+                ]
+              ),
+              _vm._v(" "),
+              _c(
+                "div",
+                {
+                  staticClass: "col-12 col-md-4",
+                  staticStyle: { "margin-bottom": "20px" }
+                },
+                [
+                  _c(
+                    "div",
+                    {
+                      staticClass: "prcing-table reveal selected",
+                      staticStyle: {
+                        height: "100%",
+                        visibility: "visible",
+                        "-webkit-transform": "translateY(0) scale(1)",
+                        opacity: "1",
+                        transform: "translateY(0) scale(1)",
+                        "-webkit-transition":
+                          "-webkit-transform 1s ease-in-out 0s, opacity 1s ease-in-out 0s",
+                        transition:
+                          "transform 1s ease-in-out 0s, opacity 1s ease-in-out 0s"
+                      },
+                      attrs: { "data-sr-id": "2" }
+                    },
+                    [
+                      _c("div", { staticClass: "pricing-header" }, [
+                        _c("h1", [_vm._v("Package 2")]),
+                        _vm._v(" "),
+                        _c("div", { staticClass: "plan-price" }, [
+                          _vm._v("Free")
+                        ]),
+                        _vm._v(" "),
+                        _c("div", { staticClass: "term" }, [_vm._v("Forever")]),
+                        _vm._v(" "),
+                        _c("div", { staticClass: "pricing-table" }, [
+                          _c("ul", [
+                            _c("li", { staticClass: "even" }, [
+                              _vm._v("Unlimited Searches")
+                            ]),
+                            _vm._v(" "),
+                            _c("li", { staticClass: "odd" }, [
+                              _vm._v("3 campaign")
+                            ]),
+                            _vm._v(" "),
+                            _c("li", { staticClass: "even opacity" }, [
+                              _vm._v("advisor for campaign")
+                            ]),
+                            _vm._v(" "),
+                            _c("li", { staticClass: "odd" }, [
+                              _vm._v("dedicated manager and regular visit")
+                            ]),
+                            _vm._v(" "),
+                            _c("li", { staticClass: "even" }, [
+                              _vm._v("detailed monthly report ")
+                            ]),
+                            _vm._v(" "),
+                            _c("li", { staticClass: "odd" }, [
+                              _vm._v("Favourite list ")
+                            ]),
+                            _vm._v(" "),
+                            _c("li", { staticClass: "even opacity" }, [
+                              _vm._v("campaign tracking ")
+                            ]),
+                            _vm._v(" "),
+                            _c("li", { staticClass: "odd" }, [
+                              _vm._v("analyze details about influencer ")
+                            ]),
+                            _vm._v(" "),
+                            _c("li", { staticClass: "odd" }, [
+                              _vm._v("email and chat support ")
+                            ])
+                          ])
+                        ])
+                      ])
+                    ]
+                  )
+                ]
+              ),
+              _vm._v(" "),
+              _c(
+                "div",
+                {
+                  staticClass: "col-12 col-md-4",
+                  staticStyle: { "margin-bottom": "20px" }
+                },
+                [
+                  _c(
+                    "div",
+                    {
+                      staticClass: "prcing-table reveal not-selected",
+                      staticStyle: {
+                        height: "100%",
+                        visibility: "visible",
+                        "-webkit-transform": "translateY(0) scale(1)",
+                        opacity: "1",
+                        transform: "translateY(0) scale(1)",
+                        "-webkit-transition":
+                          "-webkit-transform 1s ease-in-out 0s, opacity 1s ease-in-out 0s",
+                        transition:
+                          "transform 1s ease-in-out 0s, opacity 1s ease-in-out 0s"
+                      },
+                      attrs: { "data-sr-id": "3" }
+                    },
+                    [
+                      _c("div", { staticClass: "pricing-header" }, [
+                        _c("h1", [_vm._v("Package 3")]),
+                        _vm._v(" "),
+                        _c("div", { staticClass: "plan-price" }, [
+                          _vm._v("Free")
+                        ]),
+                        _vm._v(" "),
+                        _c("div", { staticClass: "term" }, [_vm._v("Forever")]),
+                        _vm._v(" "),
+                        _c("div", { staticClass: "pricing-table" }, [
+                          _c("ul", [
+                            _c("li", { staticClass: "even" }, [
+                              _vm._v("Unlimited Searches")
+                            ]),
+                            _vm._v(" "),
+                            _c("li", { staticClass: "odd" }, [
+                              _vm._v("unlimited campaign")
+                            ]),
+                            _vm._v(" "),
+                            _c("li", { staticClass: "even" }, [
+                              _vm._v("advisor for campaign")
+                            ]),
+                            _vm._v(" "),
+                            _c("li", { staticClass: "odd" }, [
+                              _vm._v("dedicated manager and regular visit")
+                            ]),
+                            _vm._v(" "),
+                            _c("li", { staticClass: "even" }, [
+                              _vm._v("detailed monthly report ")
+                            ]),
+                            _vm._v(" "),
+                            _c("li", { staticClass: "odd" }, [
+                              _vm._v("Favourite list ")
+                            ]),
+                            _vm._v(" "),
+                            _c("li", { staticClass: "even" }, [
+                              _vm._v("campaign tracking ")
+                            ]),
+                            _vm._v(" "),
+                            _c("li", { staticClass: "odd" }, [
+                              _vm._v("analyze details about influencer ")
+                            ]),
+                            _vm._v(" "),
+                            _c("li", { staticClass: "odd" }, [
+                              _vm._v("email and chat support ")
+                            ])
+                          ])
+                        ])
+                      ])
+                    ]
+                  )
+                ]
+              )
+            ])
+          ])
+        ]
+      )
+    ])
+  }
+]
+render._withStripped = true
+module.exports = { render: render, staticRenderFns: staticRenderFns }
+if (false) {
+  module.hot.accept()
+  if (module.hot.data) {
+    require("vue-hot-reload-api")      .rerender("data-v-1ab515e4", module.exports)
+  }
+}
+
+/***/ }),
+/* 25 */
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
+
+/***/ }),
+/* 26 */,
+/* 27 */,
+/* 28 */,
+/* 29 */,
+/* 30 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var disposed = false
+var normalizeComponent = __webpack_require__(0)
+/* script */
+var __vue_script__ = null
+/* template */
+var __vue_template__ = __webpack_require__(31)
+/* template functional */
+var __vue_template_functional__ = false
+/* styles */
+var __vue_styles__ = null
+/* scopeId */
+var __vue_scopeId__ = null
+/* moduleIdentifier (server only) */
+var __vue_module_identifier__ = null
+var Component = normalizeComponent(
+  __vue_script__,
+  __vue_template__,
+  __vue_template_functional__,
+  __vue_styles__,
+  __vue_scopeId__,
+  __vue_module_identifier__
+)
+Component.options.__file = "resources/js/views/landingfaqs.vue"
+
+/* hot reload */
+if (false) {(function () {
+  var hotAPI = require("vue-hot-reload-api")
+  hotAPI.install(require("vue"), false)
+  if (!hotAPI.compatible) return
+  module.hot.accept()
+  if (!module.hot.data) {
+    hotAPI.createRecord("data-v-89d1c6f6", Component.options)
+  } else {
+    hotAPI.reload("data-v-89d1c6f6", Component.options)
+  }
+  module.hot.dispose(function (data) {
+    disposed = true
+  })
+})()}
+
+module.exports = Component.exports
+
+
+/***/ }),
+/* 31 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var render = function() {
+  var _vm = this
+  var _h = _vm.$createElement
+  var _c = _vm._self._c || _h
+  return _vm._m(0)
+}
+var staticRenderFns = [
+  function() {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("div", [
+      _c("section", { staticClass: "features-two", attrs: { id: "feature" } }, [
+        _c("div", { staticClass: "container" }, [
+          _c("div", { staticClass: "row" }, [
+            _c("div", { staticClass: "col-12 col-md-11 offset-md-1" }, [
+              _c("div", { staticClass: "feature-wrapper" }, [
+                _c("ul", { staticClass: "feature" }, [
+                  _c(
+                    "li",
+                    {
+                      staticClass: "feature__list",
+                      staticStyle: {
+                        visibility: "visible",
+                        "-webkit-transform": "translateY(0) scale(1)",
+                        opacity: "1",
+                        transform: "translateY(0) scale(1)",
+                        "-webkit-transition":
+                          "-webkit-transform 1s ease-in-out 0s, opacity 1s ease-in-out 0s",
+                        transition:
+                          "transform 1s ease-in-out 0s, opacity 1s ease-in-out 0s"
+                      },
+                      attrs: { "data-sr-id": "3" }
+                    },
+                    [
+                      _c("div", [
+                        _c("h5", { staticClass: "feature__title" }, [
+                          _c(
+                            "a",
+                            {
+                              attrs: {
+                                href:
+                                  "http://10.10.30.196:8000/faqs/general-faqs"
+                              }
+                            },
+                            [_vm._v("General FAQs")]
+                          )
+                        ]),
+                        _vm._v(" "),
+                        _c("p", { staticClass: "feature__description" }, [
+                          _vm._v(
+                            "Big, small, online, offline, local or international. Size doesn't matter. We work on diverse projects for top brands."
+                          )
+                        ])
+                      ])
+                    ]
+                  ),
+                  _vm._v(" "),
+                  _c(
+                    "li",
+                    {
+                      staticClass: "feature__list",
+                      staticStyle: {
+                        visibility: "visible",
+                        "-webkit-transform": "translateY(0) scale(1)",
+                        opacity: "1",
+                        transform: "translateY(0) scale(1)",
+                        "-webkit-transition":
+                          "-webkit-transform 1s ease-in-out 0s, opacity 1s ease-in-out 0s",
+                        transition:
+                          "transform 1s ease-in-out 0s, opacity 1s ease-in-out 0s"
+                      },
+                      attrs: { "data-sr-id": "4" }
+                    },
+                    [
+                      _c("div", [
+                        _c("h5", { staticClass: "feature__title" }, [
+                          _c(
+                            "a",
+                            {
+                              attrs: {
+                                href:
+                                  "http://10.10.30.196:8000/faqs/influencer-faqs"
+                              }
+                            },
+                            [_vm._v("Influencer FAQs")]
+                          )
+                        ]),
+                        _vm._v(" "),
+                        _c("p", { staticClass: "feature__description" }, [
+                          _vm._v(
+                            "They're probably distracted too. Keep it simple and beautiful, fun and functional. Clean aesthetics supported."
+                          )
+                        ])
+                      ])
+                    ]
+                  ),
+                  _vm._v(" "),
+                  _c(
+                    "li",
+                    {
+                      staticClass: "feature__list",
+                      staticStyle: {
+                        visibility: "visible",
+                        "-webkit-transform": "translateY(0) scale(1)",
+                        opacity: "1",
+                        transform: "translateY(0) scale(1)",
+                        "-webkit-transition":
+                          "-webkit-transform 1s ease-in-out 0s, opacity 1s ease-in-out 0s",
+                        transition:
+                          "transform 1s ease-in-out 0s, opacity 1s ease-in-out 0s"
+                      },
+                      attrs: { "data-sr-id": "5" }
+                    },
+                    [
+                      _c("div", [
+                        _c("h5", { staticClass: "feature__title" }, [
+                          _c(
+                            "a",
+                            {
+                              attrs: {
+                                href: "http://10.10.30.196:8000/faqs/brand-faqs"
+                              }
+                            },
+                            [_vm._v("Brand FAQs")]
+                          )
+                        ]),
+                        _vm._v(" "),
+                        _c("p", { staticClass: "feature__description" }, [
+                          _vm._v(
+                            "While designing residential property, a great emphasis is placed on infrastructure: landscaping design.\n                                "
+                          )
+                        ])
+                      ])
+                    ]
+                  )
+                ]),
+                _vm._v(" "),
+                _c("div", { staticClass: "feature-media reveal" }, [
+                  _c("picture", { staticClass: "feature-media__img" }, [
+                    _c("source", {
+                      attrs: {
+                        srcset:
+                          "http://10.10.30.196:8000/frontend/img/faq-1.png",
+                        media: "(min-width: 768px)"
+                      }
+                    }),
+                    _vm._v(" "),
+                    _c("img", {
+                      attrs: {
+                        src: "http://10.10.30.196:8000/frontend/img/faq-2.png",
+                        alt: "features--smaller"
+                      }
+                    })
+                  ])
+                ])
+              ])
+            ])
+          ])
+        ])
+      ])
+    ])
+  }
+]
+render._withStripped = true
+module.exports = { render: render, staticRenderFns: staticRenderFns }
+if (false) {
+  module.hot.accept()
+  if (module.hot.data) {
+    require("vue-hot-reload-api")      .rerender("data-v-89d1c6f6", module.exports)
+  }
+}
+
+/***/ }),
+/* 32 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var disposed = false
+var normalizeComponent = __webpack_require__(0)
+/* script */
+var __vue_script__ = null
+/* template */
+var __vue_template__ = __webpack_require__(33)
+/* template functional */
+var __vue_template_functional__ = false
+/* styles */
+var __vue_styles__ = null
+/* scopeId */
+var __vue_scopeId__ = null
+/* moduleIdentifier (server only) */
+var __vue_module_identifier__ = null
+var Component = normalizeComponent(
+  __vue_script__,
+  __vue_template__,
+  __vue_template_functional__,
+  __vue_styles__,
+  __vue_scopeId__,
+  __vue_module_identifier__
+)
+Component.options.__file = "resources/js/views/landingaboutus.vue"
+
+/* hot reload */
+if (false) {(function () {
+  var hotAPI = require("vue-hot-reload-api")
+  hotAPI.install(require("vue"), false)
+  if (!hotAPI.compatible) return
+  module.hot.accept()
+  if (!module.hot.data) {
+    hotAPI.createRecord("data-v-0e973db3", Component.options)
+  } else {
+    hotAPI.reload("data-v-0e973db3", Component.options)
+  }
+  module.hot.dispose(function (data) {
+    disposed = true
+  })
+})()}
+
+module.exports = Component.exports
+
+
+/***/ }),
+/* 33 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var render = function() {
+  var _vm = this
+  var _h = _vm.$createElement
+  var _c = _vm._self._c || _h
+  return _vm._m(0)
+}
+var staticRenderFns = [
+  function() {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("div", [
+      _c(
+        "section",
+        {
+          staticClass: "features-one reveal",
+          staticStyle: {
+            "margin-top": "60px",
+            visibility: "visible",
+            "-webkit-transform": "translateY(0) scale(1)",
+            opacity: "1",
+            transform: "translateY(0) scale(1)",
+            "-webkit-transition":
+              "-webkit-transform 1s ease-in-out 0s, opacity 1s ease-in-out 0s",
+            transition: "transform 1s ease-in-out 0s, opacity 1s ease-in-out 0s"
+          },
+          attrs: { "data-sr-id": "2" }
+        },
+        [
+          _c("div", { staticClass: "container" }, [
+            _c("div", { staticClass: "row" }, [
+              _c("div", { staticClass: "col-12" }, [
+                _c("div", { staticClass: "section-title" }, [
+                  _c("h2", [_vm._v("About Us")]),
+                  _vm._v(" "),
+                  _c("p", [
+                    _vm._v(
+                      "Uptrendly is Nepal's only Influence marketing platform. We advertise your products through Nepal's top social media influencers, who'll build brand recognition for you and engage your target audience with organic posts.\n                    "
+                    )
+                  ])
+                ])
+              ])
+            ]),
+            _vm._v(" "),
+            _c(
+              "h5",
+              {
+                staticStyle: { "margin-bottom": "40px", "text-align": "center" }
+              },
+              [_vm._v("Out Team Members")]
+            ),
+            _vm._v(" "),
+            _c("div", { staticClass: "row" }, [
+              _c("div", { staticClass: "col-12 col-md-3" }, [
+                _c("div", { staticClass: "feature" }, [
+                  _c("img", {
+                    staticClass: "img img-circle",
+                    staticStyle: {
+                      "border-radius": "50%",
+                      width: "70%",
+                      "box-shadow": "0 4px 8px 0 rgba(0,0,0,0.12),",
+                      "margin-bottom": "10px"
+                    },
+                    attrs: {
+                      src:
+                        "http://10.10.30.196:8000/backend/assets/img/staffs/monayac@mns.com.np_BpBypbL8zMtA4I0g.png",
+                      alt: "staff"
+                    }
+                  }),
+                  _vm._v(" "),
+                  _c(
+                    "h5",
+                    {
+                      staticClass: "feature__title",
+                      staticStyle: { color: "#585858" }
+                    },
+                    [_vm._v("Monayac Karki")]
+                  ),
+                  _vm._v(" "),
+                  _c("p", { staticClass: "feature__description" }, [
+                    _vm._v("Brand Head")
+                  ])
+                ])
+              ]),
+              _vm._v(" "),
+              _c("div", { staticClass: "col-12 col-md-3" }, [
+                _c("div", { staticClass: "feature" }, [
+                  _c("img", {
+                    staticClass: "img img-circle",
+                    staticStyle: {
+                      "border-radius": "50%",
+                      width: "70%",
+                      "box-shadow": "0 4px 8px 0 rgba(0,0,0,0.12),",
+                      "margin-bottom": "10px"
+                    },
+                    attrs: {
+                      src:
+                        "http://10.10.30.196:8000/backend/assets/img/staffs/sushant@uptrendly.com_dZCpni2hjo1knBRP.png",
+                      alt: "staff"
+                    }
+                  }),
+                  _vm._v(" "),
+                  _c(
+                    "h5",
+                    {
+                      staticClass: "feature__title",
+                      staticStyle: { color: "#585858" }
+                    },
+                    [_vm._v("Sushant Diyali")]
+                  ),
+                  _vm._v(" "),
+                  _c("p", { staticClass: "feature__description" }, [
+                    _vm._v("Sr. Brand development Excecutive")
+                  ])
+                ])
+              ]),
+              _vm._v(" "),
+              _c("div", { staticClass: "col-12 col-md-3" }, [
+                _c("div", { staticClass: "feature" }, [
+                  _c("img", {
+                    staticClass: "img img-circle",
+                    staticStyle: {
+                      "border-radius": "50%",
+                      width: "70%",
+                      "box-shadow": "0 4px 8px 0 rgba(0,0,0,0.12),",
+                      "margin-bottom": "10px"
+                    },
+                    attrs: {
+                      src:
+                        "http://10.10.30.196:8000/backend/assets/img/staffs/monayac@uptrendly.com_28VMU9eqvBVqUSvd.png",
+                      alt: "staff"
+                    }
+                  }),
+                  _vm._v(" "),
+                  _c(
+                    "h5",
+                    {
+                      staticClass: "feature__title",
+                      staticStyle: { color: "#585858" }
+                    },
+                    [_vm._v("Monalisha Maharjan")]
+                  ),
+                  _vm._v(" "),
+                  _c("p", { staticClass: "feature__description" }, [
+                    _vm._v("Manager, Business Opertions")
+                  ])
+                ])
+              ]),
+              _vm._v(" "),
+              _c("div", { staticClass: "col-12 col-md-3" }, [
+                _c("div", { staticClass: "feature" }, [
+                  _c("img", {
+                    staticClass: "img img-circle",
+                    staticStyle: {
+                      "border-radius": "50%",
+                      width: "70%",
+                      "box-shadow": "0 4px 8px 0 rgba(0,0,0,0.12),",
+                      "margin-bottom": "10px"
+                    },
+                    attrs: {
+                      src:
+                        "http://10.10.30.196:8000/backend/assets/img/staffs/lasata@uptrendly.com_DaGimkXxWbtTpr9D.png",
+                      alt: "staff"
+                    }
+                  }),
+                  _vm._v(" "),
+                  _c(
+                    "h5",
+                    {
+                      staticClass: "feature__title",
+                      staticStyle: { color: "#585858" }
+                    },
+                    [_vm._v("Lasata Maharjan")]
+                  ),
+                  _vm._v(" "),
+                  _c("p", { staticClass: "feature__description" }, [
+                    _vm._v("Brand Associate")
+                  ])
+                ])
+              ]),
+              _vm._v(" "),
+              _c("div", { staticClass: "col-12 col-md-3" }, [
+                _c("div", { staticClass: "feature" }, [
+                  _c("img", {
+                    staticClass: "img img-circle",
+                    staticStyle: {
+                      "border-radius": "50%",
+                      width: "70%",
+                      "box-shadow": "0 4px 8px 0 rgba(0,0,0,0.12),",
+                      "margin-bottom": "10px"
+                    },
+                    attrs: {
+                      src:
+                        "http://10.10.30.196:8000/backend/assets/img/staffs/asbin@uptrendly.com_J6O7y5EpuOlnhUpz.png",
+                      alt: "staff"
+                    }
+                  }),
+                  _vm._v(" "),
+                  _c(
+                    "h5",
+                    {
+                      staticClass: "feature__title",
+                      staticStyle: { color: "#585858" }
+                    },
+                    [_vm._v("Asbin Adhikari")]
+                  ),
+                  _vm._v(" "),
+                  _c("p", { staticClass: "feature__description" }, [
+                    _vm._v("Senior Marketing Executive")
+                  ])
+                ])
+              ]),
+              _vm._v(" "),
+              _c("div", { staticClass: "col-12 col-md-3" }, [
+                _c("div", { staticClass: "feature" }, [
+                  _c("img", {
+                    staticClass: "img img-circle",
+                    staticStyle: {
+                      "border-radius": "50%",
+                      width: "70%",
+                      "box-shadow": "0 4px 8px 0 rgba(0,0,0,0.12),",
+                      "margin-bottom": "10px"
+                    },
+                    attrs: {
+                      src:
+                        "http://10.10.30.196:8000/backend/assets/img/staffs/miliyanashresha@uptrendly.com_TqOBiTTJTTGSw8pf.png",
+                      alt: "staff"
+                    }
+                  }),
+                  _vm._v(" "),
+                  _c(
+                    "h5",
+                    {
+                      staticClass: "feature__title",
+                      staticStyle: { color: "#585858" }
+                    },
+                    [_vm._v("Miliyana Shrestha")]
+                  ),
+                  _vm._v(" "),
+                  _c("p", { staticClass: "feature__description" }, [
+                    _vm._v("Marketing Executive")
+                  ])
+                ])
+              ]),
+              _vm._v(" "),
+              _c("div", { staticClass: "col-12 col-md-3" }, [
+                _c("div", { staticClass: "feature" }, [
+                  _c("img", {
+                    staticClass: "img img-circle",
+                    staticStyle: {
+                      "border-radius": "50%",
+                      width: "70%",
+                      "box-shadow": "0 4px 8px 0 rgba(0,0,0,0.12),",
+                      "margin-bottom": "10px"
+                    },
+                    attrs: {
+                      src: "http://10.10.30.196:8000/frontend/img/LLogo.jpg",
+                      alt: "photo"
+                    }
+                  }),
+                  _vm._v(" "),
+                  _c(
+                    "h5",
+                    {
+                      staticClass: "feature__title",
+                      staticStyle: { color: "#585858" }
+                    },
+                    [_vm._v("Sampada Mishra")]
+                  ),
+                  _vm._v(" "),
+                  _c("p", { staticClass: "feature__description" }, [
+                    _vm._v("Influencer Associate")
+                  ])
+                ])
+              ]),
+              _vm._v(" "),
+              _c("div", { staticClass: "col-12 col-md-3" }, [
+                _c("div", { staticClass: "feature" }, [
+                  _c("img", {
+                    staticClass: "img img-circle",
+                    staticStyle: {
+                      "border-radius": "50%",
+                      width: "70%",
+                      "box-shadow": "0 4px 8px 0 rgba(0,0,0,0.12),",
+                      "margin-bottom": "10px"
+                    },
+                    attrs: {
+                      src:
+                        "http://10.10.30.196:8000/backend/assets/img/staffs/aayushma@uptrendly.com_QKbe6C2GpsagVLnj.png",
+                      alt: "staff"
+                    }
+                  }),
+                  _vm._v(" "),
+                  _c(
+                    "h5",
+                    {
+                      staticClass: "feature__title",
+                      staticStyle: { color: "#585858" }
+                    },
+                    [_vm._v("Aayushma Karki")]
+                  ),
+                  _vm._v(" "),
+                  _c("p", { staticClass: "feature__description" }, [
+                    _vm._v("Brand and Influencer Servicing Executive")
+                  ])
+                ])
+              ]),
+              _vm._v(" "),
+              _c("div", { staticClass: "col-12 col-md-3" }, [
+                _c("div", { staticClass: "feature" }, [
+                  _c("img", {
+                    staticClass: "img img-circle",
+                    staticStyle: {
+                      "border-radius": "50%",
+                      width: "70%",
+                      "box-shadow": "0 4px 8px 0 rgba(0,0,0,0.12),",
+                      "margin-bottom": "10px"
+                    },
+                    attrs: {
+                      src: "http://10.10.30.196:8000/frontend/img/LLogo.jpg",
+                      alt: "photo"
+                    }
+                  }),
+                  _vm._v(" "),
+                  _c(
+                    "h5",
+                    {
+                      staticClass: "feature__title",
+                      staticStyle: { color: "#585858" }
+                    },
+                    [_vm._v("Brizendra Bhattarai")]
+                  ),
+                  _vm._v(" "),
+                  _c("p", { staticClass: "feature__description" }, [
+                    _vm._v("Multimedia Executive")
+                  ])
+                ])
+              ]),
+              _vm._v(" "),
+              _c("div", { staticClass: "col-12 col-md-3" }, [
+                _c("div", { staticClass: "feature" }, [
+                  _c("img", {
+                    staticClass: "img img-circle",
+                    staticStyle: {
+                      "border-radius": "50%",
+                      width: "70%",
+                      "box-shadow": "0 4px 8px 0 rgba(0,0,0,0.12),",
+                      "margin-bottom": "10px"
+                    },
+                    attrs: {
+                      src: "http://10.10.30.196:8000/frontend/img/LLogo.jpg",
+                      alt: "photo"
+                    }
+                  }),
+                  _vm._v(" "),
+                  _c(
+                    "h5",
+                    {
+                      staticClass: "feature__title",
+                      staticStyle: { color: "#585858" }
+                    },
+                    [_vm._v("Roshan Shrestha")]
+                  ),
+                  _vm._v(" "),
+                  _c("p", { staticClass: "feature__description" }, [
+                    _vm._v("Lead Software Developer")
+                  ])
+                ])
+              ]),
+              _vm._v(" "),
+              _c("div", { staticClass: "col-12 col-md-3" }, [
+                _c("div", { staticClass: "feature" }, [
+                  _c("img", {
+                    staticClass: "img img-circle",
+                    staticStyle: {
+                      "border-radius": "50%",
+                      width: "70%",
+                      "box-shadow": "0 4px 8px 0 rgba(0,0,0,0.12),",
+                      "margin-bottom": "10px"
+                    },
+                    attrs: {
+                      src: "http://10.10.30.196:8000/frontend/img/LLogo.jpg",
+                      alt: "photo"
+                    }
+                  }),
+                  _vm._v(" "),
+                  _c(
+                    "h5",
+                    {
+                      staticClass: "feature__title",
+                      staticStyle: { color: "#585858" }
+                    },
+                    [_vm._v("Susan Prajapati")]
+                  ),
+                  _vm._v(" "),
+                  _c("p", { staticClass: "feature__description" }, [
+                    _vm._v("Brand Associate")
+                  ])
+                ])
+              ]),
+              _vm._v(" "),
+              _c("div", { staticClass: "col-12 col-md-3" }, [
+                _c("div", { staticClass: "feature" }, [
+                  _c("img", {
+                    staticClass: "img img-circle",
+                    staticStyle: {
+                      "border-radius": "50%",
+                      width: "70%",
+                      "box-shadow": "0 4px 8px 0 rgba(0,0,0,0.12),",
+                      "margin-bottom": "10px"
+                    },
+                    attrs: {
+                      src:
+                        "http://10.10.30.196:8000/backend/assets/img/staffs/dhirajthapa1992@gmail.com_kgX08B1nXMLoEezp.png",
+                      alt: "staff"
+                    }
+                  }),
+                  _vm._v(" "),
+                  _c(
+                    "h5",
+                    {
+                      staticClass: "feature__title",
+                      staticStyle: { color: "#585858" }
+                    },
+                    [_vm._v("Dhiraj Thapa")]
+                  ),
+                  _vm._v(" "),
+                  _c("p", { staticClass: "feature__description" }, [
+                    _vm._v("Sales Executive")
+                  ])
+                ])
+              ])
+            ])
+          ])
+        ]
+      )
+    ])
+  }
+]
+render._withStripped = true
+module.exports = { render: render, staticRenderFns: staticRenderFns }
+if (false) {
+  module.hot.accept()
+  if (module.hot.data) {
+    require("vue-hot-reload-api")      .rerender("data-v-0e973db3", module.exports)
+  }
+}
 
 /***/ })
 /******/ ]);
