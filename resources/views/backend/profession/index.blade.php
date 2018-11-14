@@ -17,9 +17,14 @@
 
 
     <div class="col s12">
-        @if(Session::has('successMessage'))
-            <p class="alert alert-info">{{ Session::get('successMessage') }}</p>
+        @if(session()->has('successMessage'))
+            <div class="alert alert-{{ session('successMessage') }}">
+                {!! session('successMessage') !!}
+            </div>
         @endif
+        {{--@if(Session::has('successMessage'))--}}
+            {{--<p class="alert alert-info">{{ Session::get('successMessage') }}</p>--}}
+        {{--@endif--}}
         <div class="card ui-app__page-content">
             <div class="card-content">
 
@@ -41,7 +46,7 @@
                             <td>{{$professionData->description}}</td>
                             <td>{{$professionData->status}}</td>
                             <td>
-                                <a href="{{url('admin/profession/edit')}}">Edit</a> | <a href="{{url('admin/profession/delete/{id}')}}">Delete</a>
+                                <a href="{{url('admin/profession/edit'.'/'.$professionData->id )}}">Edit</a> | <a href="{{url('admin/profession/delete'.'/'.$professionData->id )}}">Delete</a>
                             </td>
                         </tr>
                         @endforeach

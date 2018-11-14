@@ -48,7 +48,9 @@ class ProfessionController extends Controller
         //
         //dd($request);
         $request->validate([
-            'title'=>'required|max:100|min:5|unique:professions,title'
+            'title'=>'required|max:100|min:5|unique:professions,title',
+            'description' => 'required|min:10',
+            'status' => 'required'
         ]);
 
         $professionData = new Profession;
@@ -79,10 +81,11 @@ class ProfessionController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function edit()
+    public function edit($id)
     {
         //
-        return view('backend.profession.edit');
+        $editProfession = Profession::find($id);
+        return view('backend.profession.edit', compact('editProfession'));
     }
 
     /**
@@ -95,6 +98,21 @@ class ProfessionController extends Controller
     public function update(Request $request, $id)
     {
         //
+        $request->validate([
+            'title'=>'required|max:100|min:5|unique:professions,title',
+            'description' => 'required|min:10',
+            'status' => 'required'
+        ]);
+
+        $professionData = Profession::find($id);
+
+        $professionData->title = $request->title;
+        $professionData->description = $request->description;
+        $professionData->status = $request->status;
+        if($professionData->save()){
+            Session::flash('successMessage','Profession Data has been successfully updated');
+            return redirect('admin/profession');
+        }
     }
 
     /**
@@ -105,6 +123,14 @@ class ProfessionController extends Controller
      */
     public function destroy($id)
     {
-        //
+        $removeProfession = Profession::findorFail($id);
+        //dd($removeProfession);
+
+        if($removeProfession->delete()){
+            Session::flash('successMessage','Profession has been successfully deleted');
+            return redirect('admin/profession');
+        }
+
+
     }
 }

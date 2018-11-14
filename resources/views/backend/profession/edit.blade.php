@@ -14,16 +14,23 @@
                 <div class="card-title title">Edit Profession</div>
 
                 <div class="card-body">
-                    <form action="" method="post">
+                    <form method="post">
+                        @csrf()
                         <div class="row">
                             <div class="col-md-12 mb-12 focused">
                                 <label for="title">Title <span class="error">*</span></label>
                                 <input type="text" autofocus="autofocus" name="title" id="title" placeholder="Profession Title Here...." class="form-control">
+                                @if($errors->has('title'))
+                                    <label id="name-error" class="error">{{$errors->first('title')}}</label>
+                                @endif
                             </div>
 
                             <div class="col-md-12 mb-12 focused">
                                 <label for="description">Description</label>
                                 <textarea name="description" id="description" placeholder="Profession Description Here...." cols="30" rows="3" class="form-control"></textarea>
+                                @if($errors->has('description'))
+                                    <label id="name-error" class="error">{{$errors->first('description')}}</label>
+                                @endif
                             </div>
 
                             <div class="col-md-12 mb-12 focused">
