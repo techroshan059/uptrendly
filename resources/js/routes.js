@@ -8,18 +8,20 @@ import LandingBrand from './views/landingbrand.vue';
 import LandingPricing from './views/landingpricing.vue';
 import LandingFaqs from './views/landingfaqs.vue';
 import LandingAboutUs from './views/landingaboutus.vue';
+import BrandRegisterSuccess from './views/brandregistersuccess.vue';
 Vue.use(VueRouter);
 const routes = new VueRouter ({
     mode: 'history',
     routes:[
         {path: '/', component: Home },
         {path: '/login', component: Login },
-        {path: '/brandsignup', component: BrandSignup },
+        {path: '/brand-signup', component: BrandSignup },
         {path: '/brand', component: LandingBrand },
         {path: '/influencer', component: LandingInfluencer },
         {path: '/pricing', component: LandingPricing },
         {path: '/faqs', component: LandingFaqs },
         {path: '/about-us', component: LandingAboutUs },
+        {path: '/brand-register-success', component: BrandRegisterSuccess },
     ]
 });
 

@@ -485,3 +485,8 @@ ul{
 .opacity {
     opacity: 0.3;
 }
+.error{
+    font-weight: 600;
+    color: red!important;
+    font-size: 14px;
+}

@@ -41,7 +41,7 @@
                                                 <a style="font-size: 14px;" class="navigation-menu__link" href="#">Influencers</a>
                                             </li>
                                             <li class="navigation-menu__item">
-                                                <a  style="font-size: 14px;" class="navigation-menu__link" href="#">Brands</a>
+                                                <router-link  style="font-size: 14px;" class="navigation-menu__link" to="/brand-signup">Brands</router-link>
                                             </li>
                                         </ul>
                                     </li>

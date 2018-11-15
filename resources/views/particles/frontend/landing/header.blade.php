@@ -40,7 +40,7 @@
     ul li  a{
         color: #585858;
     }
-    .login-one{
+    {{-- .login-one{
         background:url("frontend/img/bg06.png") 100% 100% no-repeat,url("frontend/img/bg07.png") 0 100% no-repeat #fff;
-    }
+    } --}}
 </style>
