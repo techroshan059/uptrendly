@@ -13,7 +13,7 @@
             <div class="card-content">
                 <div class="card-title title">Edit Testimonials</div>
 
-                <div class="card-body" style="margin-bottom: 70px;">
+                <div enctype="multipart/form-data" style="margin-bottom: 70px;">
                     <form action="" method="post">
                         <div class="form-row">
                             <div class="col-md-12 mb-12 focused">

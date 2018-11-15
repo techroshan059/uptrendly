@@ -7,8 +7,7 @@
     <ol class="breadcrumbs">
         <li><a href="{{url('/dashboard')}}" style="color: black;">Dashboard</a></li>
         <li style="color: #65cadb">Profession List</li>
-        <div style="float:right;">
-            +<a class="" href="{{url('admin/profession/addnew')}}">Add profession</a>
+        <div style="float:right;"><a class="btn--add" href="{{url('admin/profession/addnew')}}"> <i class=""></i> Add profession</a>
         </div>
     </ol>
     </div>

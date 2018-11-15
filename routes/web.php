@@ -48,9 +48,9 @@ Route::get('admin/faqs/delete/{id}','Backend\CmsManagement\FaqsController@destro
 Route::get('admin/testimonials','Backend\CmsManagement\TestimonialsController@index')->name('admin.Testimonials.index');
 Route::get('admin/testimonials/addnew','Backend\CmsManagement\TestimonialsController@create');
 Route::post('admin/testimonials/addnew','Backend\CmsManagement\TestimonialsController@store');
-Route::get('admin/testimonials/edit','Backend\CmsManagement\TestimonialsController@edit');
-Route::post('admin/testimonials','Backend\CmsManagement\TestimonialsController@update');
-Route::delete('admin/testimonials/delete/{id}','Backend\CmsManagement\TestimonialsController@destroy');
+//Route::get('admin/testimonials/edit/{id}','Backend\CmsManagement\TestimonialsController@edit');
+//Route::post('admin/testimonials/edit/{id}','Backend\CmsManagement\TestimonialsController@update');
+Route::get('admin/testimonials/delete/{id}','Backend\CmsManagement\TestimonialsController@destroy');
 
 Route::get('admin/dashboard', 'Backend\HomeController@index')->name('admin.dashboard');
 
