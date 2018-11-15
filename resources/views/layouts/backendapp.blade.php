@@ -2,41 +2,27 @@
 
 <!DOCTYPE html>
 
-<html lang="en">
+<html class="loading" lang="en" data-textdirection="ltr">
 <head>
     @include('particles.backend.header')
 </head>
-<body>
-<div class="ui-app">
-    <div class="ui-app__wrapper">
-        <div id="prepage-loader" style="display: none;">
-            <div class="ui-app__prepage-loader spinner">
-                <div class="double-bounce1"></div>
-                <div class="double-bounce2"></div>
-            </div>
-        </div>
-        @include('particles.backend.topnav')
-        @include('particles.backend.sidenav')
-        <main>
+<body class="vertical-layout vertical-menu 2-columns   menu-expanded fixed-navbar" data-open="click" data-menu="vertical-menu" data-col="2-columns">
 
-            <!-- Page content -->
-            <div class="row">
-                <!-- Analytics Header -->
-
+    @include('particles.backend.topnav')
+    @include('particles.backend.sidenav')
+<div class="app-content content">
+    <div class="content-wrapper">
+       
                 @yield('admin-content')
-
-            </div>
-            <!--End Page content -->
-
-        </main>
-
-        @include('particles.backend.footer')
+      
     </div>
-
 </div>
+@include('particles.backend.footer')
+
 
 @include('particles.backend.javascript')
 
 
 </body>
 </html>
+

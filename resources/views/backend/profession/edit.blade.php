@@ -1,20 +1,30 @@
 @extends('layouts.backendapp')
 @section('admin-content')
-    <div class="col m12 l12">
-    <ol class="breadcrumbs">
-        <li><a href="{{url('/dashboard')}}" style="color: black;">Dashboard</a></li>
-        <li><a href="{{url('admin/profession')}}" style="color: black;">Profession List</a></li>
-        <li style="color: #65cadb;">Edit</li>
-    </ol>
-    </div>
+<div class="content-header row">
+        <div class="content-header-left col-md-8 col-12 mb-2 breadcrumb-new">
+          <h3 class="content-header-title mb-0 d-inline-block">Edit Profession</h3>
+          <div class="row breadcrumbs-top d-inline-block">
+            <div class="breadcrumb-wrapper col-12">
+              <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url('admin/dashboard') }}">Dashboard</a>
+                </li>
+                <li class="breadcrumb-item"><a href="{{ url('admin/profession') }}">Profession List</a>
+                    <li class="breadcrumb-item active"><a>Edit Profession</a>
+                </li>
+              </ol>
+            </div>
+          </div>
+        </div>
+       
+      </div>
 
     <div class="col m12 l12">
-        <div class="card ui-app__page-content">
+        <div class="card">
             <div class="card-content">
-                <div class="card-title title">Edit Profession</div>
+            
 
                 <div class="card-body">
-                    <form method="post">
+                    <form method="POST">
                         @csrf()
                         <div class="row">
                             <div class="col-md-12 mb-12 focused">
@@ -41,10 +51,10 @@
                             </div>
 
 
-                            <div class="input-field col s12">
-                                <button class="btn waves-effect waves-light right" type="submit" name="action" style="background-color: #65cadb;">Update
-                                </button>
-                            </div>
+                            <div class="input-field col s12" style="margin-top:10px">
+                                    <button class="btn btn-info float-right" type="submit" name="action" style="background-color: #65cadb;"><i class="ft-save mr-1"></i> Save Update
+                                    </button>
+                                </div>
 
                         </div>
                     </form>

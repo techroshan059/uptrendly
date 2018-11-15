@@ -1,27 +1,29 @@
 @extends('layouts.backendapp')
 @section('admin-content')
-    <style>
-        .chips.focus, input:not([type]):focus:not([readonly]), input[type=text]:not(.browser-default):focus:not([readonly]), input[type=password]:not(.browser-default):focus:not([readonly]), input[type=email]:not(.browser-default):focus:not([readonly]), input[type=url]:not(.browser-default):focus:not([readonly]), input[type=time]:not(.browser-default):focus:not([readonly]), input[type=date]:not(.browser-default):focus:not([readonly]), input[type=datetime]:not(.browser-default):focus:not([readonly]), input[type=datetime-local]:not(.browser-default):focus:not([readonly]), input[type=tel]:not(.browser-default):focus:not([readonly]), input[type=number]:not(.browser-default):focus:not([readonly]), input[type=search]:not(.browser-default):focus:not([readonly]), textarea.materialize-textarea:focus:not([readonly]){
-            border-bottom: 1px solid #65cadb;
+<div class="content-header row">
+        <div class="content-header-left col-md-8 col-12 mb-2 breadcrumb-new">
+          <h3 class="content-header-title mb-0 d-inline-block">Add New Profession</h3>
+          <div class="row breadcrumbs-top d-inline-block">
+            <div class="breadcrumb-wrapper col-12">
+              <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url('admin/dashboard') }}">Dashboard</a>
+                </li>
+                <li class="breadcrumb-item"><a href="{{ url('admin/profession') }}">Profession Lists</a>
+                    <li class="breadcrumb-item active"><a>Add Profession</a>
+                </li>
+              </ol>
+            </div>
+          </div>
+        </div>
+       
+      </div>
 
-            box-shadow: 0 1px 0 0 #65cadb;
-        }
-    </style>
-    <div class="col m12 l21">
-    <ol class="breadcrumbs">
-        <li><a href="{{url('/dashboard')}}" style="color: black;">Dashboard</a></li>
-        <li><a href="{{url('admin/profession')}}" style="color: black;">Profession List</a></li>
-        <li style="color: #65cadb;">Add</li>
-    </ol>
-    </div>
 
     <div class="col m12 l12">
-        <div class="card ui-app__page-content">
+        <div class="card">
             <div class="card-content">
-                <div class="card-title title">Add Profession</div>
-
                 <div class="card-body">
-                    <form action="" method="post">
+                    <form method="post">
                         @csrf()
                         <div class="row">
                             <div class="col-md-12 mb-12 focused">
@@ -34,7 +36,7 @@
 
                             <div class="col-md-12 mb-12 focused">
                                 <label for="description">Description</label>
-                                <textarea name="description" id="description" placeholder="Profession Description Here...." cols="30" rows="3" class="form-control"></textarea>
+                                <textarea name="description" value="{{old('description')}}"  placeholder="Profession Description Here...." cols="30" rows="3" class="form-control"></textarea>
                                 @if($errors->has('description'))
                                     <label id="name-error" class="error">{{$errors->first('description')}}</label>
                                 @endif
@@ -53,8 +55,8 @@
                             @endif
 
 
-                            <div class="input-field col s12">
-                                <button class="btn waves-effect waves-light right" type="submit" name="action" style="background-color: #65cadb;">Add
+                            <div class="input-field col s12" style="margin-top:10px">
+                                <button class="btn btn-info float-right" type="submit" name="action" style="background-color: #65cadb;"><i class="ft-save mr-1"></i> Save
                                 </button>
                             </div>
 

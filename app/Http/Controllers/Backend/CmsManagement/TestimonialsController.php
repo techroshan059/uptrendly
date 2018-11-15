@@ -70,7 +70,7 @@ class TestimonialsController extends Controller
         //
         $testimonialsData = Testimonial::find($id);
 
-        $testimonialsData->
+   
     }
 
     public function destroy($id)

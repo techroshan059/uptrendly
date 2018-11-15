@@ -3,35 +3,30 @@
 
 <!--Page title-->
 <title>Dashboard - Uptrendly</title>
+<link rel="shortcut icon" type="image/x-icon" href="https://pixinvent.com/bootstrap-admin-template/robust/app-assets/images/ico/favicon.ico">
+<link href="https://fonts.googleapis.com/css?family=Open+Sans:300,300i,400,400i,600,600i,700,700i|Muli:300,400,500,700" rel="stylesheet">
+<link rel="stylesheet" type="text/css" href="{{url('BackendAssets/css/vendors.css')}}">
+<link rel="stylesheet" type="text/css" href="{{url('BackendAssets/vendors/css/charts/jquery-jvectormap-2.0.3.css')}}">
+<link rel="stylesheet" type="text/css" href="{{url('BackendAssets/vendors/css/charts/morris.css')}}">
+<link rel="stylesheet" type="text/css" href="{{url('BackendAssets/vendors/css/extensions/unslider.css')}}">
+<link rel="stylesheet" type="text/css" href="{{url('BackendAssets/vendors/css/weather-icons/climacons.min.css')}}">
+<!-- END VENDOR CSS-->
+<!-- BEGIN ROBUST CSS-->
+<link rel="stylesheet" type="text/css" href="{{url('BackendAssets/css/app.css')}}">
+<!-- END ROBUST CSS-->
+<!-- BEGIN Page Level CSS-->
+<link rel="stylesheet" type="text/css" href="{{url('BackendAssets/css/core/menu/menu-types/vertical-menu.css')}}">
+<link rel="stylesheet" type="text/css" href="{{url('BackendAssets/css/core/colors/palette-gradient.css')}}">
+<link rel="stylesheet" type="text/css" href="{{url('BackendAssets/css/core/colors/palette-gradient.css')}}">
+<link rel="stylesheet" type="text/css" href="{{url('BackendAssets/css/plugins/calendars/clndr.css')}}">
+<link rel="stylesheet" type="text/css" href="{{url('BackendAssets/fonts/meteocons/style.min.css')}}">
 
-<!--Browser navbar color (#5c6bc0: indigo lighten-1) for mobile-->
-<!-- Chrome, Firefox OS and Opera -->
-<meta name="theme-color" content="#5c6bc0">
-<!-- Windows Phone -->
-<meta name="msapplication-navbutton-color" content="#5c6bc0">
-<!-- iOS Safari -->
-<meta name="apple-mobile-web-app-status-bar-style" content="#5c6bc0">
-<!--Favicon icon-->
-{{--<link href="../assets/images/favicon.png" type="image/png" rel="icon">--}}
 
-<!--Import Google Icon Font-->
-<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+<link rel="stylesheet" type="text/css" href="{{url('BackendAssets/css/style.css')}}">
+<style>
+    .error{
+        color:red;
+    }
+</style>
 
-<!-- ================================================
-CSS
-================================================ -->
 
-<!--Import materialize.css-->
-<link type="text/css" rel="stylesheet" href="{{url('backend/node_modules/css/materialize.min.css')}}" />
-<!-- Import prismjs (syntex highlighter) -->
-<link type="text/css" rel="stylesheet" href="{{url('backend/node_modules/css/prism.css')}}" />
-<!-- Import Efnify app css -->
-<link type="text/css" rel="stylesheet" href="{{url('backend/css/app.css')}}" />
-<!-- Import Efnify app helper class css -->
-<link type="text/css" rel="stylesheet" href="{{url('backend/css/helper.css')}}" />
-<!-- Import Efnify app responsive css -->
-<link type="text/css" rel="stylesheet" href="{{url('backend/css/responsive.css')}}" />
-<!-- Import Efnify app theme css -->
-<link type="text/css" rel="stylesheet" href="{{url('backend/css/default.css')}}" />
-<style type="text/css">/* Chart.js */
-    @-webkit-keyframes chartjs-render-animation{from{opacity:0.99}to{opacity:1}}@keyframes chartjs-render-animation{from{opacity:0.99}to{opacity:1}}.chartjs-render-monitor{-webkit-animation:chartjs-render-animation 0.001s;animation:chartjs-render-animation 0.001s;}</style>
