@@ -17,9 +17,9 @@ class CreateFaqsTable extends Migration
             $table->increments('id');
             $table->longText('question');
             $table->longText('answer');
-            $table->integer('type');
+            $table->string('type');
             $table->integer('sort_order');
-            $table->string('status');
+            $table->tinyInteger('status');
             $table->timestamps();
         });
     }

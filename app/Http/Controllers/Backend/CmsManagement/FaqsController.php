@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers\Backend\CmsManagement;
 
+use App\Faqs;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Session;
 
 class FaqsController extends Controller
 {
@@ -15,7 +17,8 @@ class FaqsController extends Controller
     public function index()
     {
         //
-        return view('backend.faqs.index');
+        $faqsData = Faqs::all();
+        return view('backend.faqs.index',compact('faqsData'));
     }
 
     /**
@@ -38,6 +41,26 @@ class FaqsController extends Controller
     public function store(Request $request)
     {
         //
+
+        $request->validate([
+            'question'=>'required|min:10|unique:faqs,question',
+            'answer'=>'required|min:10|unique:faqs,answer',
+            'type' => 'required',
+            'sort_order' => 'required',
+            'status' => 'required'
+        ]);
+
+        $faqsData = new Faqs;
+        $faqsData->question = $request->question;
+        $faqsData->answer = $request->answer;
+        $faqsData->type = $request->type;
+        $faqsData->sort_order = $request->sort_order;
+        $faqsData->status = $request->status;
+
+        if($faqsData->save()){
+            Session::flash('successMessage','New Faqs has been successfully added');
+            return redirect('admin/faqs');
+        }
     }
 
     /**
@@ -57,10 +80,12 @@ class FaqsController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function edit()
+    public function edit($id)
     {
         //
-        return view('backend.faqs.edit');
+        $editFaqs = Faqs::find($id);
+        return view('backend.faqs.edit', compact('editFaqs'));
+
     }
 
     /**
@@ -73,6 +98,25 @@ class FaqsController extends Controller
     public function update(Request $request, $id)
     {
         //
+        $request->validate([
+            'question'=>'required|min:10|unique:faqs,question',
+            'answer'=>'required|min:10|unique:faqs,answer',
+            'type' => 'required',
+            'sort_order' => 'required',
+            'status' => 'required'
+        ]);
+
+        $faqsData = Faqs::find($id);
+
+        $faqsData->question = $request->question;
+        $faqsData->answer = $request->answer;
+        $faqsData->type = $request->type;
+        $faqsData->sort_order = $request->sort_order;
+        $faqsData->status = $request->status;
+        if($faqsData->save()){
+            Session::flash('successMessage','Faqs Data has been successfully updated');
+            return redirect('admin/faqs');
+        }
     }
 
     /**
@@ -84,5 +128,12 @@ class FaqsController extends Controller
     public function destroy($id)
     {
         //
+        $removeFaqs = Faqs::findorFail($id);
+
+
+        if($removeFaqs->delete()){
+            Session::flash('successMessage','Faqs has been successfully deleted');
+            return redirect('admin/faqs');
+        }
     }
 }

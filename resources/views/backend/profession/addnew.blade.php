@@ -35,14 +35,22 @@
                             <div class="col-md-12 mb-12 focused">
                                 <label for="description">Description</label>
                                 <textarea name="description" id="description" placeholder="Profession Description Here...." cols="30" rows="3" class="form-control"></textarea>
+                                @if($errors->has('description'))
+                                    <label id="name-error" class="error">{{$errors->first('description')}}</label>
+                                @endif
                             </div>
 
                             <div class="col-md-12 mb-12 focused">
                                 <label for="status">Would you like to display this Profession?  <span class="error">*</span></label>
                                 <select name="status" id="status" class="form-control">
                                     <option value="Active" selected="selected">Yes</option>
-                                    <option value="Inactive">No</option></select>
+                                    <option value="Inactive">No</option>
+                                </select>
+
                             </div>
+                            @if($errors->has('status'))
+                                <label id="name-error" class="error">{{$errors->first('status')}}</label>
+                            @endif
 
 
                             <div class="input-field col s12">

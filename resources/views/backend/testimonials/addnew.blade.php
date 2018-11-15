@@ -14,7 +14,8 @@
                 <div class="card-title title">Add Testimonials</div>
 
                 <div class="card-body" style="margin-bottom: 70px;">
-                    <form action="" method="post">
+                    <form enctype="multipart/form-data" method="post">
+                        @csrf()
                         <div class="form-row">
                             <div class="col-md-12 mb-12 focused">
                                 <label for="fullname">Full Name</label>
@@ -26,14 +27,10 @@
                                 <textarea name="description" id="description" placeholder="Description Here...." cols="30" rows="4" class="form-control"></textarea>
                             </div>
 
-                            <div class="col-md-12 mb-12">
-                                <label>Profession Title</label>
-                                <select class="form-control"></select>
-                            </div>
 
                             <div class="col-md-12 mb-12">
                                 <label>Photo (304 x 319 pixel only)</label><br/>
-                                <input accept=".png, .jpg, .jpeg" type="file" class="form-control">
+                                <input accept=".png, .jpg, .jpeg" name="photo_path" type="file" class="form-control">
                             </div>
 
                             <div class="col-md-6 mb-6 focused">
@@ -43,7 +40,8 @@
 
                             <div class="col-md-6 mb-6">
                                 <label>Would you like to display this FAQ?</label>
-                                <select id="status" class="form-control">
+                                <select name="status" class="form-control">
+                                    <option value="">Select Status</option>
                                     <option value="Active">Yes</option>
                                     <option value="Inactive">No</option></select>
                             </div>

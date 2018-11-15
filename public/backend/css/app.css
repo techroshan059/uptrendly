@@ -1477,3 +1477,12 @@ footer.page-footer .footer-copyright {
     padding: 0 20px;
     line-height: 50px;
 }
+
+.btn--add{
+    padding-top: 5px;
+    color: #ffffff;
+    background: #65cadb;
+    padding-bottom: 5px;
+    padding-right: 14px;
+    padding-left: 14px;
+}

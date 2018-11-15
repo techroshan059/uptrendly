@@ -30,27 +30,27 @@ Route::get('/dashboard', 'Backend\HomeController@index')->name('admin.dashboard'
 Route::get('admin/profession','Backend\CmsManagement\ProfessionController@index')->name('admin.profession.index');
 Route::get('admin/profession/addnew','Backend\CmsManagement\ProfessionController@create');
 Route::post('admin/profession/addnew','Backend\CmsManagement\ProfessionController@store');
-Route::get('admin/profession/edit','Backend\CmsManagement\ProfessionController@edit');
-Route::put('admin/profession','Backend\CmsManagement\ProfessionController@update');
-Route::delete('admin/profession/delete/{id}','Backend\CmsManagement\ProfessionController@destroy');
+Route::get('admin/profession/edit/{id}','Backend\CmsManagement\ProfessionController@edit');
+Route::post('admin/profession/edit/{id}','Backend\CmsManagement\ProfessionController@update');
+Route::get('admin/profession/delete/{id}','Backend\CmsManagement\ProfessionController@destroy');
 
 
 //for faqs - Admin
 Route::get('admin/faqs','Backend\CmsManagement\FaqsController@index')->name('admin.faqs.index');
 Route::get('admin/faqs/addnew','Backend\CmsManagement\FaqsController@create');
 Route::post('admin/faqs/addnew','Backend\CmsManagement\FaqsController@store');
-Route::get('admin/faqs/edit','Backend\CmsManagement\FaqsController@edit');
-Route::post('admin/faqs','Backend\CmsManagement\FaqsController@update');
-Route::delete('admin/faqs/delete/{id}','Backend\CmsManagement\FaqsController@destroy');
+Route::get('admin/faqs/edit/{id}','Backend\CmsManagement\FaqsController@edit');
+Route::post('admin/faqs/edit/{id}','Backend\CmsManagement\FaqsController@update');
+Route::get('admin/faqs/delete/{id}','Backend\CmsManagement\FaqsController@destroy');
 
 
 //for testimonial - Admin
 Route::get('admin/testimonials','Backend\CmsManagement\TestimonialsController@index')->name('admin.Testimonials.index');
 Route::get('admin/testimonials/addnew','Backend\CmsManagement\TestimonialsController@create');
 Route::post('admin/testimonials/addnew','Backend\CmsManagement\TestimonialsController@store');
-Route::get('admin/testimonials/edit','Backend\CmsManagement\TestimonialsController@edit');
-Route::post('admin/testimonials','Backend\CmsManagement\TestimonialsController@update');
-Route::delete('admin/testimonials/delete/{id}','Backend\CmsManagement\TestimonialsController@destroy');
+//Route::get('admin/testimonials/edit/{id}','Backend\CmsManagement\TestimonialsController@edit');
+//Route::post('admin/testimonials/edit/{id}','Backend\CmsManagement\TestimonialsController@update');
+Route::get('admin/testimonials/delete/{id}','Backend\CmsManagement\TestimonialsController@destroy');
 
 Route::get('admin/dashboard', 'Backend\HomeController@index')->name('admin.dashboard');
 

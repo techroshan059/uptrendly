@@ -17,6 +17,9 @@
 
 
     <div class="col s12">
+        @if(Session::has('successMessage'))
+        <p class="alert alert-info">{{ Session::get('successMessage') }}</p>
+        @endif
         <div class="card ui-app__page-content">
             <div class="card-content">
 
@@ -27,23 +30,25 @@
                         <tr>
                             <th>Full Name</th>
                             <th>Description</th>
-                            <th>Profession title</th>
-                            <th>Photo</th>
                             <th>Status</th>
+                            <th>Photo</th>
+                            <th>Sort_order</th>
                             <th>Action</th>
                         </tr>
                         </thead>
                         <tbody>
+                        @foreach($testimonialData as $testimonialData)
                         <tr>
-                            <td>Alvin Care</td>
-                            <td>Lorem ipsum dolor adipisicing elit.  </td>
-                            <td>musician</td>
-                            <th>pixel.jpg</th>
-                            <td>y</td>
+                            <td>{{$testimonialData->fullname}}</td>
+                            <td>{{$testimonialData->description}} </td>
+                            <td>{{$testimonialData->status}}</td>
+                            <th>{{$testimonialData->photo_path}}</th>
+                            <td>{{$testimonialData->sort_order}}</td>
                             <td>
-                                <a href="{{url('admin/testimonials/edit')}}">Edit</a> | <a href="{{url('admin/testimonials/delete/{id}')}}">Delete</a>
+                                <a href="{{url('admin/testimonials/edit'.'/'.$testimonialData->id)}}">Edit</a> | <a href="{{url('admin/testimonials/delete'.'/'.$testimonialData->id)}}">Delete</a>
                             </td>
                         </tr>
+                        @endforeach
 
                         </tbody>
                     </table>
